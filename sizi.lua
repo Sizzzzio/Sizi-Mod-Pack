@@ -2926,7 +2926,7 @@ SMODS.Joker {
         name = 'Root Beer',
         text = {
            "Gives a random {C:attention}Skip Tag{}",
-           "when a {C:attention}Blind is selected"
+           "when a {C:attention}Blind{} is selected"
         },
     },
     atlas = 'rootbeer', --atlas' key
