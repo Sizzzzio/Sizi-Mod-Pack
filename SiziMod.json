@@ -1,0 +1,13 @@
+{
+    "id": "SiziMod",
+    "name": "Sizi's Mod Pack",
+    "author": ["Sizi"],
+    "description": "Collection of some silly ass jonklers, decks, and other crazy stuff that me and some friends came up with. More stuff will be added in future updates such as consumables and vouchers!",
+    "prefix": "sizimod",
+    "main_file": "sizi.lua",
+    "badge_colour": "c7638f",
+    "dependencies": [
+        "Steamodded (>=1.0.0~ALPHA-1225a)"
+    ],
+    "version": "1.0.0"
+}
