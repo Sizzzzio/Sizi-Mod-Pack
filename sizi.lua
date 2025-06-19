@@ -1190,7 +1190,7 @@ SMODS.Joker {
     loc_txt = { -- local text
         name = 'Gashapon Capsule',
         text = {
-            "Increases rate of {C:attention}Shop Apearances{}",
+            "Increases rate of {C:attention}Shop Appearances{}",
             "for {C:green}Uncommon{}",
             "and {C:red}Rare{} Jokers.",
             "{C:green}#2# in 100{} chance",
@@ -2926,6 +2926,7 @@ SMODS.Joker {
         name = 'Root Beer',
         text = {
            "Gives a random {C:attention}Skip Tag{}",
+           "when a {C:attention}Blind is selected"
         },
     },
     atlas = 'rootbeer', --atlas' key
