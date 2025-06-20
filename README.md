@@ -11,6 +11,8 @@ This mod is incompatible with Talisman due to some stuff relating to calculating
 on some jokers in this mod. That being said, I cannot account for this mod working great with other mods so 
 I don't know how well I can fix issues with mod compatibility so i'd advise to not report any issues pertaining to such
 
+ALSO, Please turn on Pixel Smoothening because I have not finished downscaling all the assets, so please bear with me on that
+
 Here is also a quick tutorial on how to Install mods to speed up the process:
 1. Install the Lovely injector here: https://github.com/ethangreen-dev/lovely-injector
 2. Download Steamodded and add it to your %AppData%Roaming\Balatro\mods folder https://github.com/Steamodded/smods
