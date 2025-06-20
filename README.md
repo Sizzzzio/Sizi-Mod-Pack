@@ -7,9 +7,7 @@ A collection of Jokers and other stuff based off ideas tossed around with some f
   
 # Disclaimer:
 -----------------------
-This mod is incompatible with Talisman due to some stuff relating to calculating money earned 
-on some jokers in this mod. That being said, I cannot account for this mod working great with other mods so 
-I don't know how well I can fix issues with mod compatibility so i'd advise to not report any issues pertaining to such
+This mod is now compatible with Talisman!
 
 ALSO, Please turn on Pixel Smoothening because I have not finished downscaling all the assets, so please bear with me on that
 
