@@ -18,6 +18,8 @@ px = 32,
 py = 32
 })
 
+ to_number = to_number or function(x) return x end
+
 SMODS.current_mod.optional_features = { retrigger_joker = true }
 
 sizi = SMODS.current_mod
@@ -715,7 +717,7 @@ SMODS.Joker {
     calc_dollar_bonus = function(self, card)
         if G.GAME.current_round.discards_left > -1 and G.GAME.current_round.hands_left > -1 then
             play_sound('sizimod_paid')
-            return (G.GAME.current_round.discards_left * card.ability.extra.dollars) + (G.GAME.current_round.hands_left * card.ability.extra.dollars) or nil 
+            return (G.GAME.current_round.discards_left * to_number(card.ability.extra.dollars)) + (G.GAME.current_round.hands_left * to_number(card.ability.extra.dollars)) or nil 
         end
     end
 }
@@ -963,7 +965,7 @@ SMODS.Joker {
                 end
             end
             if all_diamond and (next(context.poker_hands["Flush"]) or next(context.poker_hands["Straight Flush"]) or next(context.poker_hands["Flush Five"]) or next(context.poker_hands["Flush House"])) then
-                return {dollars = card.ability.extra.dollars}
+                return {dollars = to_number(card.ability.extra.dollars)}
             end
 		end
 	end,
@@ -1036,7 +1038,7 @@ SMODS.Joker {
                     end
                 end
                 if all_diamond and (next(context.poker_hands["Flush"]) or next(context.poker_hands["Straight Flush"]) or next(context.poker_hands["Flush Five"]) or next(context.poker_hands["Flush House"])) then
-                    return {dollars = card.ability.extra.dollars}
+                    return {dollars = to_number(card.ability.extra.dollars)}
                 end
 		    end
            
@@ -1415,18 +1417,18 @@ SMODS.Joker{
     end,
     calculate = function(self,card,context)
         if context.joker_main then
-            if (card.ability.extra.Xmult * math.floor(((G.GAME.dollars or 0) + (G.GAME.dollar_buffer or 0)) / card.ability.extra.dollars) > 0) then
+            if (to_number(card.ability.extra.Xmult) * math.floor(((to_number(G.GAME.dollars) or 0) + (to_number(G.GAME.dollar_buffer) or 0)) / to_number(card.ability.extra.dollars)) > 0) then
                 return {
                     card = card,
-                    Xmult_mod = card.ability.extra.Xmult * math.floor(((G.GAME.dollars or 0) + (G.GAME.dollar_buffer or 0)) / card.ability.extra.dollars),
-                    message = 'X' .. card.ability.extra.Xmult * math.floor(((G.GAME.dollars or 0) + (G.GAME.dollar_buffer or 0)) / card.ability.extra.dollars),
+                    Xmult_mod = card.ability.extra.Xmult * math.floor(((to_number(G.GAME.dollars) or 0) + (to_number(G.GAME.dollar_buffer) or 0)) / to_number(card.ability.extra.dollars)),
+                    message = 'X' .. card.ability.extra.Xmult * math.floor(((to_number(G.GAME.dollars) or 0) + (to_number(G.GAME.dollar_buffer) or 0)) / to_number(card.ability.extra.dollars)),
                     sound= "sizimod_mmm",
                     colour = G.C.MULT
                 }
             end
         end
         if context.starting_shop then
-            if G.GAME.dollars < 5 then 
+            if to_number(G.GAME.dollars) < 5 then 
                 play_sound("sizimod_morshu2")
             else
                play_sound("sizimod_morshu1") 
@@ -1435,7 +1437,7 @@ SMODS.Joker{
         
     end,
     calc_dollar_bonus = function(self, card)
-        return card.ability.extra.extra_dollars * math.floor(((G.GAME.dollars or 0) + (G.GAME.dollar_buffer or 0)) / card.ability.extra.earned)
+        return to_number(card.ability.extra.extra_dollars) * math.floor(((to_number(G.GAME.dollars) or 0) + (to_number(G.GAME.dollar_buffer) or 0)) / to_number(card.ability.extra.earned))
     end,   
     in_pool = function(self,wawa,wawa2)
         --whether or not this card is in the pool, return true if it is, return false if its not
@@ -1534,7 +1536,9 @@ SMODS.Joker{
     calculate = function(self, card, context)
         if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint then
             card.ability.extra_value = card.ability.extra_value + card.ability.extra.price
-            card.ability.extra.price = card.ability.extra.price - 1
+            if card.ability.extra.price > 1 then
+                card.ability.extra.price = card.ability.extra.price - 1
+            end
             card:set_cost()
             return {
                 message = localize('k_val_up'),
@@ -1618,7 +1622,7 @@ SMODS.Joker{
         end
     end,
     calc_dollar_bonus = function(self, card)
-        return card.ability.extra.dollars
+        return to_number(card.ability.extra.dollars)
     end, 
     in_pool = function(self,wawa,wawa2)
         --whether or not this card is in the pool, return true if it is, return false if its not
@@ -1677,7 +1681,7 @@ SMODS.Joker{
             for _, playing_card in ipairs(G.playing_cards) do
                 if playing_card:is_suit("Hearts") then heart_tally = heart_tally + 1 end
             end
-            return heart_tally > 0 and card.ability.extra.dollars * heart_tally or nil
+            return heart_tally > 0 and to_number(card.ability.extra.dollars) * heart_tally or nil
         end
     end,   
     in_pool = function(self,wawa,wawa2)
@@ -1870,7 +1874,7 @@ SMODS.Joker{
                     edition_tally = edition_tally + 1
                 end
             end
-            return edition_tally > 0 and card.ability.extra.dollars * edition_tally or nil
+            return edition_tally > 0 and to_number(card.ability.extra.dollars) * edition_tally or nil
     end,  
     in_pool = function(self,wawa,wawa2)
         --whether or not this card is in the pool, return true if it is, return false if its not
@@ -2020,7 +2024,7 @@ SMODS.Joker{
             if #context.full_hand == 3 and context.full_hand[1]:get_id() == 6 and context.full_hand[2]:get_id() == 6 and context.full_hand[3]:get_id() == 6 then
                 return{
                     Xmult = card.ability.extra.Xmult,
-                    dollars = card.ability.extra.dollars
+                    dollars = to_number(card.ability.extra.dollars)
                 }
             end
         end
@@ -3018,7 +3022,7 @@ SMODS.Joker {
     end,
     calc_dollar_bonus = function(self, card)
         if card.ability.extra.check ~= 0 then 
-            return (card.ability.extra.check + card.ability.extra.dollars) or nil 
+            return (card.ability.extra.check + to_number(card.ability.extra.dollars)) or nil 
         end
     end
 }
@@ -3250,7 +3254,7 @@ SMODS.Joker{
     loc_txt= {
         name = 'Broly (Z)',
         text = { "On first played {C:blue}hand{},",
-        "{C:green}#2# in 2{} chance to destory the {C:attention}first card{}",
+        "{C:green}#2# in 2{} chance to destroy the {C:attention}first card{}",
         "upgrade played poker hand",
         "by {C:attention}7 Levels{}"
             }
