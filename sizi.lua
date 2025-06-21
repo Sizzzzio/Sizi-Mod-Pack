@@ -775,8 +775,8 @@ SMODS.Joker {
     loc_txt = { -- local text
         name = 'Strawberry',
         text = {
-            "{C:red}+20{} Mult if a played hand contains a",
-            "{C:attention}Flush{} of {C:hearts}Hearts{}"
+            "{C:red}+20{} Mult if all cards scored cards",
+            "are {C:hearts}Hearts{}"
         },
     },
     atlas = 'strawberry', --atlas' key
@@ -801,7 +801,7 @@ SMODS.Joker {
                 all_hearts = false
                 end
             end
-            if all_hearts and (next(context.poker_hands["Flush"]) or next(context.poker_hands["Straight Flush"]) or next(context.poker_hands["Flush Five"]) or next(context.poker_hands["Flush House"])) then
+            if all_hearts then
                 return {
                 card = card,
                 mult_mod = card.ability.extra.mult,
@@ -824,8 +824,8 @@ SMODS.Joker {
     loc_txt = { -- local text
         name = 'Grapes',
         text = {
-          "{X:mult,C:white}X2{} Mult if a played hand contains a",
-            "{C:attention}Flush{} of {C:clubs}Clubs{}"
+          "{X:mult,C:white}X2{} Mult if all scored cards",
+            "are {C:clubs}Clubs{}"
         },
     },
     atlas = 'grapes', --atlas' key
@@ -854,7 +854,7 @@ SMODS.Joker {
                 all_clubs = false
                 end
             end
-            if all_clubs and (next(context.poker_hands["Flush"]) or next(context.poker_hands["Straight Flush"]) or next(context.poker_hands["Flush Five"]) or next(context.poker_hands["Flush House"])) then
+            if all_clubs then
                 return {
                 Xmult = card.ability.extra.Xmult
             }
@@ -878,8 +878,8 @@ SMODS.Joker {
     loc_txt = { -- local text
         name = 'Blueberry',
         text = {
-            "{X:chips,C:white}+100{} chips if a played hand contains a",
-            "{C:attention}Flush{} of {C:spades}Spades{}"
+            "{X:chips,C:white}+100{} chips if all scored cards",
+            "are {C:spades}Spades{}"
         },
     },
     atlas = 'blueberry', --atlas' key
@@ -913,7 +913,7 @@ SMODS.Joker {
                 all_spades = false
                 end
             end
-            if all_spades and (next(context.poker_hands["Flush"]) or next(context.poker_hands["Straight Flush"]) or next(context.poker_hands["Flush Five"]) or next(context.poker_hands["Flush House"])) then
+            if all_spades then
                 return {
                 card = card,
                 chip_mod = card.ability.extra.chips,
@@ -936,8 +936,8 @@ SMODS.Joker {
     loc_txt = { -- local text
         name = 'Papaya',
         text = {
-            "Earn {C:money}$5{} if a played hand contains a",
-            "{C:attention}Flush{} of {C:diamonds}Diamonds{}"
+            "Earn {C:money}$5{} if all scored cards",
+            "are {C:diamonds}Diamonds{}"
         },
     },
     atlas = 'papaya', --atlas' key
@@ -964,7 +964,7 @@ SMODS.Joker {
                 all_diamond = false
                 end
             end
-            if all_diamond and (next(context.poker_hands["Flush"]) or next(context.poker_hands["Straight Flush"]) or next(context.poker_hands["Flush Five"]) or next(context.poker_hands["Flush House"])) then
+            if all_diamond then
                 return {dollars = to_number(card.ability.extra.dollars)}
             end
 		end
@@ -983,7 +983,8 @@ SMODS.Joker {
         name = 'Fruit Bowl',
         text = {
             "Activates a {C:attention}Fruit Joker{}",
-            "ability depending on the flush a hand contains"
+            "ability depending suit of all",
+            "{C:attention}scored cards{}"
         },
     },
     atlas = 'bowl', --atlas' key
@@ -1022,13 +1023,11 @@ SMODS.Joker {
                         all_diamonds = false
                     end
                 end
-                if next(context.poker_hands["Flush"]) then
-                     return {
+                return {
                      mult = all_hearts and card.ability.extra.mult or nil,
                      chips = all_spades and card.ability.extra.chips or nil,
                      Xmult = all_clubs and card.ability.extra.Xmult or nil,
-                    }
-                end 
+                }
             end
             if context.cardarea == G.jokers and context.before and context.full_hand then
                 local all_diamond = true
@@ -1037,7 +1036,7 @@ SMODS.Joker {
                     all_diamond = false
                     end
                 end
-                if all_diamond and (next(context.poker_hands["Flush"]) or next(context.poker_hands["Straight Flush"]) or next(context.poker_hands["Flush Five"]) or next(context.poker_hands["Flush House"])) then
+                if all_diamond then
                     return {dollars = to_number(card.ability.extra.dollars)}
                 end
 		    end
@@ -1395,7 +1394,7 @@ SMODS.Joker{
         },
     },
     atlas = 'morshu', --atlas' key
-    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
     --soul_pos = { x = 0, y = 0 },
     cost = 7, --cost
     unlocked = true, --where it is unlocked or not: if true, 
@@ -1479,7 +1478,7 @@ SMODS.Joker{
         },
     },
     atlas = 'ghosts', --atlas' key
-    rarity = 1, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
     --soul_pos = { x = 0, y = 0 },
     cost = 5, --cost
     unlocked = true, --where it is unlocked or not: if true, 
@@ -2929,7 +2928,7 @@ SMODS.Joker {
     loc_txt = { -- local text
         name = 'Root Beer',
         text = {
-           "Gives a random {C:attention}Skip Tag{}",
+           "Gives a {C:attention}Double Tag{}",
            "when a {C:attention}Blind{} is selected"
         },
     },
@@ -2951,7 +2950,9 @@ SMODS.Joker {
                 func = function()
                     G.E_MANAGER:add_event(Event({
                         func = (function()
-                            add_tag(Tag(get_next_tag_key()))
+                            -- local tag = Tag(pseudorandom_element(G.P_TAGS, "seed").key)
+                            -- tag:set_ability()
+                             add_tag(Tag('tag_double'))
                             play_sound('generic1', 0.9 + math.random() * 0.1, 0.8)
                             play_sound('holo1', 1.2 + math.random() * 0.1, 0.4)
                             return true
@@ -3115,7 +3116,8 @@ SMODS.Joker{
         name = 'Vegito',
         text = { "Retriggers the Joker",
                     "to the right twice and",
-                "adds 2 retriggers at the end of round",
+                "adds 1 retrigger at the end of round",
+                "{C:attention}(Up to a max of 15)",
             "{C:inactive}(Currently {C:attention}#1#{C:inactive} Retriggers)"}
     },
     atlas = 'vegito',
@@ -3152,8 +3154,8 @@ SMODS.Joker{
 			end
 		end
 
-        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint then
-           card.ability.extra.retriggers = card.ability.extra.retriggers + 2
+        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint and card.ability.extra.retriggers < 15 then
+           card.ability.extra.retriggers = card.ability.extra.retriggers + 1
            return {
                 message = "THIS IS SUPER VEGITO!",
             }
