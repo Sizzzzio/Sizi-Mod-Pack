@@ -11,6 +11,9 @@ This mod is now compatible with Talisman!
 
 ALSO, Please turn on Pixel Smoothening because I have not finished downscaling all the assets, so please bear with me on that
 
+Some Jokers have music that play when they are owned, so turn it on and off the setting in the mod config tabs so if you want the music to play 
+when loading the mod for the first time, trying to fix that issue but somehow music doesn't play unless you do that first somehow
+
 Here is also a quick tutorial on how to Install mods to speed up the process:
 1. Install the Lovely injector here: https://github.com/ethangreen-dev/lovely-injector
 2. Download Steamodded and add it to your %AppData%Roaming\Balatro\mods folder https://github.com/Steamodded/smods
