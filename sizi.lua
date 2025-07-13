@@ -4171,7 +4171,7 @@ SMODS.Joker{
         return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self, card, context) 
-        if context.individual and context.cardarea == G.play and not context.end_of_round and next(context.poker_hands["Three of a Kind"]) then
+        if context.individual and context.cardarea == G.play and G.GAME.current_round.current_hand.handname == "Three of a Kind" then
             local temp_Mult, temp_ID = 15, 15
             local slot_card = nil
             for i = 1, #G.play.cards do
@@ -4587,12 +4587,18 @@ SMODS.Joker{
                 message = "Upgrade!"
             }
         end
-        if context.sizimod_probability_fail and context.setting_blind then 
+        if context.sizimod_probability_fail and context.other_joker then 
             card.ability.extra.Xmult = card.ability.extra.Xmult + card.ability.extra.extra
             return {
                 message = "Upgrade!"
             }
         end
+        -- if context.sizimod_probability_fail and context.other_joker and context.setting_blind then 
+        --     card.ability.extra.Xmult = card.ability.extra.Xmult + card.ability.extra.extra
+        --     return {
+        --         message = "Upgrade!"
+        --     }
+        -- end
         if context.joker_main then
             return {
                 Xmult = card.ability.extra.Xmult 
