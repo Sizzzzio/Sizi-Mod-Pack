@@ -5107,7 +5107,7 @@ SMODS.Atlas {
 SMODS.Joker{
     key = 'neo', --joker key
     loc_txt = { -- local text
-        name = "Neo_",
+        name = "NeoUnderscore",
         text = {
         "When playing a {C:attention}#2#{} of {C:hearts}Hearts{},",
         "This Joker gives {X:mult,C:white}X3{} Mult",
