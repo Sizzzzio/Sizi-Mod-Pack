@@ -14,3 +14,34 @@ payload = '''
 '''
 match_indent = true 
 times = 2
+
+
+## Remove base game sticker rolls if one is added
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = "if G.GAME.modifiers.enable_eternals_in_shop and eternal_perishable_poll > 0.7 then"
+position = "at"
+match_indent = true
+payload = '''
+    if G.GAME.modifiers.enable_eternals_in_shop and eternal_perishable_poll > (G.GAME.sizimod_eternal_rate or 0.7) and not SMODS.Stickers["eternal"].should_apply then'''
+
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = "elseif G.GAME.modifiers.enable_perishables_in_shop and ((eternal_perishable_poll > 0.4) and (eternal_perishable_poll <= 0.7)) then"
+position = "at"
+match_indent = true
+payload = '''
+ elseif G.GAME.modifiers.enable_perishables_in_shop and ((eternal_perishable_poll > (G.GAME.sizimod_perish_low or 0.4)) and (eternal_perishable_poll <= (G.GAME.sizimod_perish_rate or 0.7))) and not SMODS.Stickers["perishable"].should_apply then
+'''
+
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = "if G.GAME.modifiers.enable_rentals_in_shop and pseudorandom((area == G.pack_cards and 'packssjr' or 'ssjr')..G.GAME.round_resets.ante) > 0.7 then"
+position = "at"
+match_indent = true
+G.GAME.sizimod_rental_rate = 0.1
+payload = '''if G.GAME.modifiers.enable_rentals_in_shop and pseudorandom((area == G.pack_cards and 'packssjr' or 'ssjr')..G.GAME.round_resets.ante) > (G.GAME.sizimod_rental_rate or 0.7) and not SMODS.Stickers["rental"].should_apply then'''
+
