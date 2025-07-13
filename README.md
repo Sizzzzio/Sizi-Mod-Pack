@@ -2,12 +2,13 @@
 A collection of Jokers and other stuff based off ideas tossed around with some friends for Balatro 
 
 # This Mod Currently Includes
-- 50 new Jokers with varying degrees of balance
-- 9 new custom Decks to try out
+- 81 new Jokers with varying degrees of balance
+- 13 new custom Decks to try out
+- 9 new Vouchers
   
 # Disclaimer:
 -----------------------
-This mod is now compatible with Talisman!
+This mod is compatible Talisman!
 
 ALSO, Please turn on Pixel Smoothening because I have not finished downscaling all the assets, so please bear with me on that
 
