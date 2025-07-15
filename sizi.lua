@@ -4484,9 +4484,9 @@ SMODS.Joker{
     loc_txt = { -- local text
         name = 'Poker Face',
         text = {
-            "{C:blue}+10{} Chips when first playing",
-            "a type of {C:attention}poker hand",
-             "{C:inactive}(Currently {C:blue}+#1#{C:inactive} Chips)"
+            "{C:blue}+10{} Chips when playing a",
+            "type of {C:attention}poker hand{}",
+            "for the {C:attention}first time{}"
         },
     },
     atlas = 'pokerface', --atlas' key
