@@ -576,7 +576,9 @@ SMODS.Joker{
         text = {
             'Destroys a Joker to the right',
             'to create another {C:attention}Weegee',
-            '{X:mult,C:white}X#1#{} Mult per {C:attention}Weegee'
+            "that copies the {C:attention}edition{}",
+            "as the destroyed Joker",
+            '{X:mult,C:white}X#1#{} Mult per {C:attention}Weegee',
 
         },
     },
@@ -632,6 +634,15 @@ SMODS.Joker{
 			}))
 			local card = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_sizimod_weegee2")
 			card:add_to_deck()
+            if sliced_card.edition and sliced_card.edition.key == "e_foil" then 
+                card:set_edition("e_foil", true)
+            elseif sliced_card.edition and sliced_card.edition.key == "e_polychrome" then 
+                card:set_edition("e_polychrome", true)
+            elseif sliced_card.edition and sliced_card.edition.key == "e_holo" then 
+                card:set_edition("e_holo", true)
+            else
+                card:set_edition("e_negative", true)
+            end
 			G.jokers:emplace(card)
 			return nil, true
 		end
@@ -4666,7 +4677,7 @@ SMODS.Joker{
         end
         if context.joker_main then
             return {
-                Xmult = card.ability.extra.Xmult 
+                chips = card.ability.extra.chips
             }
         end
     end,
