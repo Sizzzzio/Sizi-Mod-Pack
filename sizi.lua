@@ -186,6 +186,40 @@ SMODS.current_mod.extra_tabs = function()
                         ref_value = "cell",
                         opt_callback = 'cycle_options',
                     },
+                    create_option_cycle{
+                        label = localize('b_music'),
+                        w = 4.5,
+                        info = {
+                                "When to play Catswing by Toby Fox",
+                            },
+                        options = {
+                            "While Mike is owned",
+                            "Disabled",
+                        },
+                        current_option = sizi.config.mike,
+                        colour = sizi.badge_colour,
+                        text_scale = 0.5,  -- default is 0.5
+                        ref_table = sizi.config,
+                        ref_value = "mike",
+                        opt_callback = 'cycle_options',
+                    },
+                    create_option_cycle{
+                        label = localize('b_music'),
+                        w = 4.5,
+                        info = {
+                                "When to play DBFZ SSJ4 Gogeta Theme",
+                            },
+                        options = {
+                            "While SSJ4 Gogeta is owned",
+                            "Disabled",
+                        },
+                        current_option = sizi.config.fourgeta,
+                        colour = sizi.badge_colour,
+                        text_scale = 0.5,  -- default is 0.5
+                        ref_table = sizi.config,
+                        ref_value = "fourgeta",
+                        opt_callback = 'cycle_options',
+                    },
                 }
         },
         }}
@@ -286,11 +320,12 @@ SMODS.Joker{
     pos = {x=0, y= 0},
     config = { extra = {chips = 500, odds = 4}},
     loc_vars = function(self,info_queue,center)
-        return {vars = {center.ability.extra.chips, (G.GAME.probabilities.normal or 1), center.ability.extra.odds}} --#1# is replaced with card.ability.extra.Xmult
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+        return {vars = {center.ability.extra.chips, new_numerator, new_denominator}} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self,card,context)
         if context.joker_main then
-            if pseudorandom("sizimod_spunchbop") < G.GAME.probabilities.normal / card.ability.extra.odds then
+            if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
                 return {
                     card = card,
                     chip_mod = card.ability.extra.chips,
@@ -410,7 +445,7 @@ SMODS.Joker{
         name = 'Donkey Kong',
         text = {
                     "Creates a Negative Gros Michel, or",
-                    "{C:green}#1# in #2#{} chance to create a",
+                    "{C:green}#1# in 8{} chance to create a",
                     "Negative Cavendish"
         }
         },
@@ -427,12 +462,13 @@ SMODS.Joker{
     pos = {x=0, y= 0},
     config = { extra = {odds = 8}},
     loc_vars = function(self,info_queue,center)
-        return {vars = { (G.GAME.probabilities.normal or 1), center.ability.extra.odds}} 
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+        return {vars = {new_numerator, new_denominator}} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self,card,context)
         if context.setting_blind then
             G.GAME.joker_buffer = G.GAME.joker_buffer + 1
-            if pseudorandom("sizimod_kong") < G.GAME.probabilities.normal / card.ability.extra.odds then
+            if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
                 play_sound("sizimod_banan")
                 return {
                     extra = {
@@ -641,7 +677,7 @@ SMODS.Joker{
             elseif sliced_card.edition and sliced_card.edition.key == "e_holo" then 
                 card:set_edition("e_holo", true)
             else
-                card:set_edition("e_negative", true)
+                card:set_edition(sliced_card.edition.key, true)
             end
 			G.jokers:emplace(card)
 			return nil, true
@@ -1217,12 +1253,6 @@ local function reset_neo_card()
     end
 end
 
-function SMODS.current_mod.reset_game_globals(run_start)
-    reset_hitman_card()
-    reset_neo_card()
-end
-
-
 SMODS.Atlas {
    key = 'gacha', --atlas key
     path = 'gacha.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
@@ -1255,7 +1285,8 @@ SMODS.Joker {
     pos = { x = 0, y = 0 },
     config = { extra = { new_rate = 10, odds = 100} },
     loc_vars = function(self, info_queue, center)
-        return { vars = {center.ability.extra.new_rate, (G.GAME.probabilities.normal or 1), center.ability.extra.odds} }
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+        return { vars = {center.ability.extra.new_rate, new_numerator, new_denominator} }
     end,
     add_to_deck = function(self, card, from_debuff)
         G.GAME.uncommon_mod = G.GAME.uncommon_mod * card.ability.extra.new_rate
@@ -1268,7 +1299,8 @@ SMODS.Joker {
     calculate = function(self, card, context) 
         if context.setting_blind and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
              G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
-             if pseudorandom("sizimod_gacha") < G.GAME.probabilities.normal / card.ability.extra.odds then
+             if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
+
                 return {
                     extra = {
                         func = function() -- This is for timing purposes, everything here runs after the message
@@ -1465,7 +1497,7 @@ SMODS.Joker{
                     card = card,
                     Xmult_mod = card.ability.extra.Xmult * math.floor(((to_number(G.GAME.dollars) or 0) + (to_number(G.GAME.dollar_buffer) or 0)) / to_number(card.ability.extra.dollars)),
                     message = 'X' .. card.ability.extra.Xmult * math.floor(((to_number(G.GAME.dollars) or 0) + (to_number(G.GAME.dollar_buffer) or 0)) / to_number(card.ability.extra.dollars)),
-                    sound= "sizimod_mmm",
+                    sound = "sizimod_mmm",
                     colour = G.C.MULT
                 }
             end
@@ -1814,9 +1846,9 @@ SMODS.Joker{
         },
     },
     atlas = 'rock', --atlas' key
-    rarity = 1, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
     --soul_pos = { x = 0, y = 0 },
-    cost = 5, --cost
+    cost = 6, --cost
     unlocked = true, --where it is unlocked or not: if true, 
     discovered = true, --whether or not it starts discovered
     blueprint_compat = true, --can it be blueprinted/brainstormed/other
@@ -2470,7 +2502,7 @@ SMODS.Joker {
         name = 'Third Eye',
         text = {
           "When your first hand",
-          "contains a {C:attention}3{},add a random",
+          "contains a {C:attention}3{}, add a random",
           "{C:attention}enhancement and edition{}"
         },
     },
@@ -2495,7 +2527,7 @@ SMODS.Joker {
                 if scored_card:get_id() == 3 and threes < 2 then
                     threes = threes + 1
                     if math.random(1,3) == 1 then
-                        _card:set_edition("e_polychrome", true)
+                        scored_card:set_edition("e_polychrome", true)
                     elseif math.random(1,3) == 2 then
                         scored_card:set_edition("e_foil", true)
                     else
@@ -2612,12 +2644,14 @@ SMODS.Joker {
     pos = { x = 0, y = 0 },
     config = { extra = { Xmult = 1, extra = 0.5, odds = 3 } },
     loc_vars = function(self, info_queue, center)
-		return { vars = {center.ability.extra.Xmult, center.ability.extra.extra, (G.GAME.probabilities.normal or 1), center.ability.extra.odds}}
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+		return { vars = {center.ability.extra.Xmult, center.ability.extra.extra, new_numerator, new_denominator}}
 	end,
 	calculate = function(self, card, context) 
         if context.setting_blind and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
              G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
-             if pseudorandom("sizimod_blackhole") < G.GAME.probabilities.normal / card.ability.extra.odds then
+             if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
+
                 return {
                     extra = {
                         func = function() -- This is for timing purposes, everything here runs after the message
@@ -2701,7 +2735,7 @@ SMODS.Joker {
         }))
     end,
     calculate = function(self, card, context) 
-         if context.setting_blind and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+        if context.setting_blind and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
             return {
                 func = function()
@@ -2734,6 +2768,11 @@ function Card:set_cost()
     card_set_cost_ref(self)
     if next(SMODS.find_card("j_sizimod_necro")) then
         if (self.ability.set == 'Spectral' or (self.ability.set == 'Booster' and self.config.center.kind == 'Spectral')) then self.cost = 0 end
+        self.sell_cost = math.max(1, math.floor(self.cost / 2)) + (self.ability.extra_value or 0)
+        self.sell_cost_label = self.facing == 'back' and '?' or self.sell_cost
+    end
+    if next(SMODS.find_card("j_sizimod_scammer")) then
+        if self.ability.set == 'Booster' then self.cost = 0 end
         self.sell_cost = math.max(1, math.floor(self.cost / 2)) + (self.ability.extra_value or 0)
         self.sell_cost_label = self.facing == 'back' and '?' or self.sell_cost
     end
@@ -3038,7 +3077,8 @@ SMODS.Joker {
     config = { extra = { dollars = 0, odds = 50, check = 0 } },
     loc_vars = function(self, info_queue, card)
         -- (G.GAME.current_round.discards_left * card.ability.extra.dollars) + (G.GAME.current_round.hands_left * card.ability.extra.dollars)
-        return { vars = { card.ability.extra.dollars, card.ability.extra.odds, card.ability.extra.check, (G.GAME.probabilities.normal or 1)} }
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+        return { vars = { card.ability.extra.dollars, new_denominator, card.ability.extra.check, new_numerator} }
     end,
     calculate = function(self, card, context)
 		if
@@ -3055,7 +3095,7 @@ SMODS.Joker {
         --     card.ability.extra.check = card.ability.extra.check + card.ability.extra.discards_used
         -- end
 
-        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint and pseudorandom("sizimod_stock") < G.GAME.probabilities.normal / card.ability.extra.odds then
+        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint and SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
             card.ability.extra.check = 0
             return {
                 message = "MARKET CRASH!"
@@ -3104,7 +3144,9 @@ SMODS.Joker{
       }
     },
     loc_vars = function(self,info_queue,center)
-        return {vars = {center.ability.extra.Xmult, center.ability.extra.odds, (G.GAME.probabilities.normal or 0)}} --#1# is replaced with card.ability.extra.Xmult
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+
+        return {vars = {center.ability.extra.Xmult, new_denominator, new_numerator}} --#1# is replaced with card.ability.extra.Xmult
     end,
 
     calculate = function(self, card, context)
@@ -3114,7 +3156,7 @@ SMODS.Joker{
             }
         end
         if context.destroy_card and not context.blueprint and context.cardarea == G.play and context.destroy_card:is_face() then
-                if pseudorandom("sizimod_gun") < G.GAME.probabilities.normal / card.ability.extra.odds then
+                if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
                     return {
                         remove = true
                     }
@@ -3408,8 +3450,8 @@ SMODS.Joker{
 				end,
 			}))
 		end
-
-        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint and card.ability.extra.destroy_count <= 0 then
+        local cellCount = 0;
+        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint and card.ability.extra.destroy_count <= 0 and cellCount < 1 then
             G.E_MANAGER:add_event(Event({
                         func = function()
                             play_sound('tarot1')
@@ -3430,6 +3472,7 @@ SMODS.Joker{
                         end
             }))
             G.GAME.joker_buffer = G.GAME.joker_buffer + 1
+            cellCount = 1;
             return {
                     extra = {
                         func = function() -- This is for timing purposes, everything here runs after the message
@@ -3519,8 +3562,8 @@ SMODS.Joker{
 				end,
 			}))
 		end
-
-        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint and card.ability.extra.destroy_count <= 0 then
+        local cellCount = 0;
+        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint and card.ability.extra.destroy_count <= 0 and cellCount < 1 then
             G.E_MANAGER:add_event(Event({
                         func = function()
                             play_sound('tarot1')
@@ -3541,6 +3584,7 @@ SMODS.Joker{
                         end
             }))
             G.GAME.joker_buffer = G.GAME.joker_buffer + 1
+            cellCount = 1;
             return {
                     extra = {
                         func = function() -- This is for timing purposes, everything here runs after the message
@@ -4164,9 +4208,9 @@ SMODS.Joker{
         },
     },
     atlas = 'slots', --atlas' key
-    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
     --soul_pos = { x = 0, y = 0 },
-    cost = 6, --cost
+    cost = 8, --cost
     unlocked = true, --where it is unlocked or not: if true, 
     discovered = true, --whether or not it starts discovered
     blueprint_compat = true, --can it be blueprinted/brainstormed/other
@@ -4433,7 +4477,7 @@ SMODS.Joker{
         name = 'Ace in the Hole',
         text = {
         "All odd ranked cards",
-        "aount as {C:attention}Aces{}"
+        "count as {C:attention}Aces{}"
         },
     },
     atlas = 'ace', --atlas' key
@@ -4497,7 +4541,9 @@ SMODS.Joker{
         text = {
             "{C:blue}+10{} Chips when playing a",
             "type of {C:attention}poker hand{}",
-            "for the {C:attention}first time{}"
+            "for the {C:attention}first time{}",
+            "after obtaining this Joker",
+            "{C:inactive}(Currently {C:blue}+#1#{C:inactive} Chips)"
         },
     },
     atlas = 'pokerface', --atlas' key
@@ -4651,9 +4697,9 @@ SMODS.Joker{
         },
     },
     atlas = 'alien', --atlas' key
-    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
     --soul_pos = { x = 0, y = 0 },
-    cost = 10, --cost
+    cost = 7, --cost
     unlocked = true, --where it is unlocked or not: if true, 
     discovered = true, --whether or not it starts discovered
     blueprint_compat = true, --can it be blueprinted/brainstormed/other
@@ -4721,11 +4767,12 @@ SMODS.Joker{
       }
     },
     loc_vars = function(self,info_queue,center)
-        return {vars = {(G.GAME.probabilities.normal or 1), center.ability.extra.odds}} --#1# is replaced with card.ability.extra.Xmult
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+        return {vars = {new_numerator, new_denominator}} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self, card, context)
         local howl_count = 0
-        if context.setting_blind and (G.GAME.blind:get_type() == 'Small' or G.GAME.blind:get_type() == 'Big' or G.GAME.blind:get_type() == 'Boss') and pseudorandom("sizimod_wolf") < G.GAME.probabilities.normal / card.ability.extra.odds and howl_count < 1 then
+        if context.setting_blind and (G.GAME.blind:get_type() == 'Small' or G.GAME.blind:get_type() == 'Big' or G.GAME.blind:get_type() == 'Boss') and SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') and howl_count < 1 then
             howl_count = howl_count + 1
             play_sound("sizimod_howl")
             G.E_MANAGER:add_event(Event({func = function()
@@ -4914,7 +4961,6 @@ SMODS.Joker{
                         for _, v in pairs(G.P_CENTER_POOLS.Planet) do
                             if v.config.hand_type == _hand then
                                 _planet = v.key
-                                print(_planet)
                             end
                         end
             end
@@ -5114,6 +5160,7 @@ function SMODS.has_no_rank(card)
         return oldsmodshasnorank(card)
     end
 
+
 SMODS.Atlas {
    key = 'neo', --atlas key
     path = 'neo.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
@@ -5166,6 +5213,2441 @@ SMODS.Joker{
         return true
     end,
 }
+
+SMODS.Atlas {
+   key = 'sweet', --atlas key
+    path = 'sweet.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'sweet', --joker key
+    loc_txt = { -- local text
+        name = 'Sweet 16',
+        text = {
+          "{C:attention}+0.5{} hand size",
+          "for every {C:attention}6{} and {C:attention}10{}",
+          "in your deck",
+          "{C:inactive}(Currently: {C:attention}#1#{C:inactive} hand size)"
+
+        },
+    },
+    atlas = 'sweet', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 7, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        h_size = 0
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        local sweet_tally = 0
+        if G.playing_cards then
+            for _, playing_card in ipairs(G.playing_cards) do
+                if playing_card:get_id() == 6 or playing_card:get_id() == 10 then sweet_tally = sweet_tally + 0.5 end
+            end
+        end
+        return {vars = {center.ability.extra.h_size + sweet_tally}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+
+    add_to_deck = function(self, card, from_debuff)
+        local sweet_tally = 0
+        if G.playing_cards then
+            for _, playing_card in ipairs(G.playing_cards) do
+                if playing_card:get_id() == 6 or playing_card:get_id() == 10 then sweet_tally = sweet_tally + 0.5 end
+            end
+        end
+        G.hand:change_size(card.ability.extra.h_size + sweet_tally)
+    end,
+    remove_from_deck = function(self, card, from_debuff)
+        local sweet_tally = 0
+        if G.playing_cards then
+            for _, playing_card in ipairs(G.playing_cards) do
+                if playing_card:get_id() == 6 or playing_card:get_id() == 10 then sweet_tally = sweet_tally + 0.5 end
+            end
+        end
+        G.hand:change_size(-card.ability.extra.h_size + sweet_tally)
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'chip', --atlas key
+    path = 'chip.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'chip', --joker key
+    loc_txt = { -- local text
+        name = 'Poker Chip',
+        text = {
+          "Earn 5% of the",
+          "{C:attention}Blind Size{} as {C:blue}chips{}",
+        },
+    },
+    atlas = 'chip', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        chips = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.chips}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.joker_main then
+            return {
+                chips = card.ability.extra.chips * to_number(G.GAME.blind.chips * 0.05)
+            }
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+local broly_music = SMODS.Sound{
+    key = "mikemusic",
+    path = "music_catswing.ogg",
+    sync = false,
+    pitch = 1,
+    select_music_track = function(self)
+        if sizi.config.mike == 1 and #SMODS.find_card("j_sizimod_mike") > 0 then
+            -- When Gogeta is present
+            return 100
+        else
+            -- always disabled
+        end
+    end
+}
+
+SMODS.Atlas {
+   key = 'mike', --atlas key
+    path = 'mike.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'mike', --joker key
+    loc_txt = { -- local text
+        name = 'Mike',
+        text = {
+          "{X:mult,C:white}X0.04{} Mult for every",
+          "volume level for the music",
+           "{C:blue}+1{} Chip for every",
+          "volume level for the sound effects",
+          "{C:inactive}(Currently: {X:mult,C:white}X#1#{C:inactive} Mult)",
+          "{C:inactive}(Currently: {C:blue}#2#{C:inactive} Chips)",
+
+        },
+    },
+    atlas = 'mike', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 0, extra = 0.04, chips = 0
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult + G.SETTINGS.SOUND.music_volume * 0.04, center.ability.extra.chips + G.SETTINGS.SOUND.game_sounds_volume}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.joker_main then
+            return {
+                Xmult = card.ability.extra.Xmult + to_number(G.SETTINGS.SOUND.music_volume * 0.04),
+                chips = card.ability.extra.chips + G.SETTINGS.SOUND.game_sounds_volume
+            }
+        end
+    end,
+}
+
+
+local function reset_fih_card_1()
+    G.GAME.current_round.sizimod_fih_card_1 = {rank = 'Ace'}
+    local valid_fih_cards = {}
+    for _, playing_card in ipairs(G.playing_cards) do
+        if not SMODS.has_no_suit(playing_card) and not SMODS.has_no_rank(playing_card) then
+            valid_fih_cards[#valid_fih_cards + 1] = playing_card
+        end
+    end
+    local fih_card_1 = pseudorandom_element(valid_fih_cards, pseudoseed('sizimod_fish' .. G.GAME.round_resets.ante))
+    if fih_card_1 then
+        G.GAME.current_round.sizimod_fih_card_1.rank = fih_card_1.base.value
+        G.GAME.current_round.sizimod_fih_card_1.id = fih_card_1.base.id
+    end
+end
+
+local function reset_fih_card_2()
+    G.GAME.current_round.sizimod_fih_card_2 = {rank = 'Aces'}
+    local valid_fih_cards = {}
+    for _, playing_card in ipairs(G.playing_cards) do
+        if not SMODS.has_no_suit(playing_card) and not SMODS.has_no_rank(playing_card) then
+            valid_fih_cards[#valid_fih_cards + 1] = playing_card
+        end
+    end
+    local fih_card_2 = pseudorandom_element(valid_fih_cards, pseudoseed('sizimod_fish' .. G.GAME.round_resets.ante))
+    if fih_card_2 then
+        G.GAME.current_round.sizimod_fih_card_2.rank = fih_card_2.base.value
+        G.GAME.current_round.sizimod_fih_card_2.id = fih_card_2.base.id
+    end
+end
+
+SMODS.Sound({
+    key = "fish",
+    path = "fish.ogg",
+})
+
+SMODS.Atlas {
+   key = 'fish', --atlas key
+    path = 'fih.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'fish', --joker key
+    loc_txt = { -- local text
+        name = 'Fish',
+        text = {
+          "When playing a pair of {C:attention}#3#s{} and {C:attention}#4#s{},",
+          "add {X:mult,C:white}X1{} Mult to this Joker",
+          "{C:inactive}(Currently: {X:mult,C:white}X#1#{C:inactive} Mult)",
+          "(Rank changes every round)",
+
+        },
+    },
+    atlas = 'fish', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 1, extra = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult, center.ability.extra.extra, localize((G.GAME.current_round.sizimod_fih_card_1 or {}).rank or 'Ace', 'ranks'), localize((G.GAME.current_round.sizimod_fih_card_2 or {}).rank or 'Ace', 'ranks')}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        local first_count = 0
+        local second_count = 0
+        if context.before and context.main_eval and not context.blueprint and G.GAME.current_round.current_hand.handname == "Two Pair" then
+            for _, scored_card in ipairs(context.scoring_hand) do
+                if scored_card:get_id() == G.GAME.current_round.sizimod_fih_card_1.id then
+                    first_count = first_count + 1
+                end
+                if scored_card:get_id() == G.GAME.current_round.sizimod_fih_card_2.id then
+                    second_count = second_count + 1
+                end
+            end
+        end
+        -- print(first_count)
+        -- print(second_count)
+        if context.before and first_count >= 2 and second_count >= 2 then
+            card.ability.extra.Xmult =  card.ability.extra.Xmult + card.ability.extra.extra
+            return {
+                message = 'FISH!',
+                sound = "sizimod_fish",
+                pitch = 1
+            }
+        end
+
+        if context.joker_main then 
+            return {
+                Xmult = card.ability.extra.Xmult,
+                sound = "sizimod_fish",
+                pitch = 1,
+            }
+        end
+
+
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'hanafuda', --atlas key
+    path = 'hanafuda.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'hanafuda', --joker key
+    loc_txt = { -- local text
+        name = 'Hanafuda Card',
+        text = {
+          "When playing a {C:attention}Straight Flush{}",
+          "earn {C:money}money{} based on the {C:attention}highest ranked card{}", 
+          "in your hand with each card triggered"
+
+        },
+    },
+    atlas = 'hanafuda', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        dollars = 0
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.dollars}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.individual and context.cardarea == G.play and G.GAME.current_round.current_hand.handname == "Straight Flush" then
+            for _, scored_card in ipairs(context.scoring_hand) do
+                local extra = scored_card:get_id()
+                    print(scored_card:get_id())
+                    return {
+                        dollars = card.ability.extra.dollars + extra
+                    }
+            end
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'box', --atlas key
+    path = 'box.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'box', --joker key
+    loc_txt = { -- local text
+        name = 'Schrodingers Joker',
+        text = {
+          "Earn {X:mult,C:white}X5{} Mult",
+          "or have your score multiplied by {X:mult,C:white}X0.5{}"
+
+        },
+    },
+    atlas = 'box', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 7, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.joker_main then 
+            if math.random(1,2) == 1 then
+                return {
+                    Xmult = card.ability.extra.Xmult * 5
+                }
+            else 
+                return {
+                    Xmult = card.ability.extra.Xmult * 0.5
+                }
+            end
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'hat', --atlas key
+    path = 'hat.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'hat', --joker key
+    loc_txt = { -- local text
+        name = 'Magic Hat',
+        text = {
+          "Randomly gives one {C:blue}hand{},",
+          "one {C:red}discard{}, or {C:attention}hand size{}",
+          "when selecting a Blind"
+
+        },
+    },
+    atlas = 'hat', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 7, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.setting_blind then
+            if math.random(1,3) == 1 then 
+             G.E_MANAGER:add_event(Event({
+                func = function()
+                    ease_hands_played(1)
+                    return true
+                end
+            }))
+            elseif math.random(1,3) == 2 then 
+             G.E_MANAGER:add_event(Event({
+                func = function()
+                    ease_discard(1)
+                end
+            }))
+            else 
+             G.E_MANAGER:add_event(Event({
+                func = function()
+                    G.hand:change_size(math.random(1,3))
+                    return true
+                end
+            }))
+            end
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'golden', --atlas key
+    path = 'golden.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'golden', --joker key
+    loc_txt = { -- local text
+        name = 'Golden Ratio',
+        text = {
+          "Each played {C:attention}Ace, 2, 3, 5, or 8{}",
+          "gives {C:money}$1{} when scored"
+
+        },
+    },
+    atlas = 'golden', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 7, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        dollars = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.dollars}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.individual and context.cardarea == G.play then
+            if context.other_card:get_id() == 2 or
+                context.other_card:get_id() == 3 or
+                context.other_card:get_id() == 5 or
+                context.other_card:get_id() == 8 or
+                context.other_card:get_id() == 14 then
+                return {
+                    dollars = card.ability.extra.dollars
+                }
+            end
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'vapor', --atlas key
+    path = 'vapor.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'vapor', --joker key
+    loc_txt = { -- local text
+        name = 'Aesthetic Joker',
+        text = {
+          "Retriggers any playing card with an {C:attention}edition{} once"
+
+        },
+    },
+    atlas = 'vapor', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 7, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        retriggers = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.retriggers}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.repetition and context.cardarea == G.play then
+			if context.other_card.edition then
+				return {
+					message = "Again!",
+                    repetitions = card.ability.extra.retriggers,
+					was_blueprinted = context.blueprint,
+                    card = card,
+				}
+			end
+		end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'tire', --atlas key
+    path = 'tire.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'tire', --joker key
+    loc_txt = { -- local text
+        name = 'The Wheel',
+        text = {
+          "All {C:attention}Stone Cards{} give {C:red}+4{} Mult"
+
+        },
+    },
+    atlas = 'tire', --atlas' key
+    rarity = 1, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 4, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        mult = 4
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.mult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.individual and context.cardarea == G.play then 
+            for _, playing_card in ipairs(G.playing_cards) do
+                if SMODS.has_enhancement(playing_card, 'm_stone') then 
+                    return {
+                        mult = card.ability.extra.mult
+                    }
+                end
+            end
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'corpo', --atlas key
+    path = 'corp.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'corpo', --joker key
+    loc_txt = { -- local text
+        name = 'Alegria Joker',
+        text = {
+          "{C:red}+7{} Mult for every {C:attention}consumable{} owned"
+
+        },
+    },
+    atlas = 'corpo', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 4, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        mult = 7
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.mult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.other_consumeable then
+            return {
+                mult = card.ability.extra.mult,
+                message_card = context.other_consumable
+            }
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'pattern', --atlas key
+    path = 'funnypattern.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'pattern', --joker key
+    loc_txt = { -- local text
+        name = 'Kaleidescope',
+        text = {
+          "All {C:attention}Holographic Cards{} give {X:mult,C:white}X1.5{} Mult"
+
+        },
+    },
+    atlas = 'pattern', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 1.5
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context) 
+        if context.individual and context.cardarea == G.play then 
+            for _, playing_card in ipairs(G.playing_cards) do
+                if playing_card.edition == "e_holo" then 
+                    return {
+                        mult = card.ability.extra.mult
+                    }
+                end
+            end
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'fool', --atlas key
+    path = 'fool.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'fool', --joker key
+    loc_txt = { -- local text
+        name = 'Natural Fool',
+        text = {
+          "Copies the ability of a random {C:attention}Joker{}"
+
+        },
+    },
+    atlas = 'fool', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 1.5
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+       _jkrlist = {}
+        for i = 1, #G.jokers.cards do
+            if G.jokers.cards[i].config.center.blueprint_compat == true and G.jokers.cards[i] ~= card then
+                table.insert(_jkrlist,G.jokers.cards[i])
+            end
+        end
+        local other_joker = nil
+        -- for i = 1, #_jkrlist do
+        --     if G.jokers.cards[i] == card then other_joker = G.jokers.cards[i + 1] end
+        -- end
+        other_joker = _jkrlist[math.random(1, #_jkrlist)]
+        return SMODS.blueprint_effect(card, other_joker, context)
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'geode', --atlas key
+    path = 'geode.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'geode', --joker key
+    loc_txt = { -- local text
+        name = 'Geode',
+        text = {
+          "{C:green}#1# in 4{} chance to give",
+          "{C:attention}Stone Cards{} an edition"
+
+        },
+    },
+    atlas = 'geode', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        odds = 4
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+        return {vars = {new_numerator, new_denominator}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.before and context.main_eval and not context.blueprint then
+            for _, scored_card in ipairs(context.scoring_hand) do
+                if SMODS.has_enhancement(scored_card, 'm_stone') then 
+                   if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
+                        if math.random(1,3) == 1 then
+                            scored_card:set_edition("e_polychrome", true)
+                        elseif math.random(1,3) == 2 then
+                            scored_card:set_edition("e_foil", true)
+                        else
+                            scored_card:set_edition("e_holo", true)
+                        end
+                    end
+                end
+            end
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'cheat', --atlas key
+    path = 'cheat.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'cheat', --joker key
+    loc_txt = { -- local text
+        name = 'Cheat',
+        text = {
+            "This Joker gives {X:mult,C:white}X5{} Mult when",
+          "playing a {C:attention}pair{} of an unknown rank",
+          "(Rank changes every round)"
+
+        },
+    },
+    atlas = 'cheat', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 8, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 5
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        local count = 0
+        if context.before and context.main_eval and not context.blueprint and G.GAME.current_round.current_hand.handname == "Pair" then
+            for _, scored_card in ipairs(context.scoring_hand) do
+                if scored_card:get_id() == G.GAME.current_round.sizimod_cheat_card.id then
+                    count = count + 1
+                end
+            end
+        end
+
+        if context.joker_main and count >= 2 then 
+            return {
+                Xmult = card.ability.extra.Xmult,
+            }
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+local function reset_cheat_card()
+    G.GAME.current_round.sizimod_cheat_card = {rank = 'Ace'}
+    local valid_cheat_cards = {}
+    for _, playing_card in ipairs(G.playing_cards) do
+        if not SMODS.has_no_suit(playing_card) and not SMODS.has_no_rank(playing_card) then
+            valid_cheat_cards[#valid_cheat_cards + 1] = cheat_card
+        end
+    end
+    local cheat_card = pseudorandom_element(valid_cheat_cards, pseudoseed('sizimod_cheat' .. G.GAME.round_resets.ante))
+    if cheat_card then
+        G.GAME.current_round.sizimod_cheat_card.rank = cheat_card.base.value
+        G.GAME.current_round.sizimod_cheat_card.id = cheat_card.base.id
+    end
+end
+
+SMODS.Atlas {
+   key = 'luggage', --atlas key
+    path = 'case.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'luggage', --joker key
+    loc_txt = { -- local text
+        name = 'Luggage',
+        text = {
+            "{C:attention}Aces{} activate every {C:attention}seal{} ability"
+        },
+    },
+    atlas = 'luggage', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 8, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        dollars = 3, retriggers = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.repetition then
+            if context.cardarea == G.play and context.other_card:get_id() == 14 then
+                return {
+                    message = "Again!",
+                    repetitions = card.ability.extra.retriggers,
+                    card = card,
+                }
+            end
+        end
+        if context.discard and not context.blueprint and context.other_card:get_id() == 14 then
+            G.E_MANAGER:add_event(Event({
+                        func = (function()
+                            G.E_MANAGER:add_event(Event({
+                                func = function()
+                                    SMODS.add_card {
+                                        set = 'Tarot',
+                                        edition = "e_negative"
+                                    }
+                                    G.GAME.consumeable_buffer = 0
+                                    return true
+                                end
+                            }))
+                            SMODS.calculate_effect({ message = "Kamikaze", colour = G.C.BLUE },
+                                context.blueprint_card or card)
+                            return true
+                        end)
+            }))
+        end
+        if context.individual and context.cardarea == G.play then
+            if context.other_card:get_id() == 14 then
+                return {
+                    dollars = card.ability.extra.dollars
+                }
+            end
+        end
+        if context.end_of_round and context.cardarea == G.hand and context.other_card == card and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+            G.E_MANAGER:add_event(Event({
+                trigger = 'before',
+                delay = 0.0,
+                func = function()
+                    if G.GAME.last_hand_played then
+                        local _planet = nil
+                        for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+                            if v.config.hand_type == G.GAME.last_hand_played then
+                                _planet = v.key
+                            end
+                        end
+                        if _planet then
+                            SMODS.add_card({ key = _planet })
+                        end
+                        G.GAME.consumeable_buffer = 0
+                    end
+                    return true
+                end
+            }))
+            return { message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet }
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'seal', --atlas key
+    path = 'seal.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'seal', --joker key
+    loc_txt = { -- local text
+        name = 'Seal',
+        text = {
+            "{C:green}#1# in 4{} chance to give",
+            "each {C:attention}scored card{} a {C:attention}seal{}"
+        },
+    },
+    atlas = 'seal', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        odds = 4
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+        return {vars = {new_numerator, new_denominator}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        local _seal = SMODS.poll_seal({ guaranteed = true, type_key = 'sizimod_seel_seal' })
+        if context.before and context.main_eval and not context.blueprint then
+            for _, scored_card in ipairs(context.scoring_hand) do
+                if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
+                    scored_card:set_seal(_seal, nil, true)
+                end
+            end
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'henge', --atlas key
+    path = 'stonehenge.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'henge', --joker key
+    loc_txt = { -- local text
+        name = 'Stonehenge',
+        text = {
+             "All {C:attention}Stone cards{}",
+             "count as their {C:attention}original suit{}"
+        },
+    },
+    atlas = 'henge', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        odds = 4
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.before and context.main_eval then
+            for i = 1, #context.scoring_hand do
+                    if SMODS.has_no_suit(context.full_hand[i]) then 
+                        return context.full_hand[i].base.suit
+                    end
+            end
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+local oldsmodshasnosuit = SMODS.has_no_suit
+function SMODS.has_no_suit(card)
+        if next(SMODS.find_card("j_sizimod_henge")) and SMODS.has_enhancement(card, "m_stone") then return false end
+        return oldsmodshasnosuit(card)
+    end
+
+
+SMODS.Atlas {
+   key = 'monolith', --atlas key
+    path = 'monolith.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'monolith', --joker key
+    loc_txt = { -- local text
+        name = 'Monolith',
+        text = {
+             "When your first hand is a {C:attention}High Card{},",
+             "destory the card and add 10% of",
+             "its rank as {X:mult,C:white}Xmult{}",
+             "to this Joker",
+             "{C:inactive}(Currently: {X:mult,C:white}X#1#{C:inactive} Mult)"
+        },
+    },
+    atlas = 'monolith', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.destroy_card and not context.blueprint then
+            if #context.full_hand == 1 and context.destroy_card == context.full_hand[1] and G.GAME.current_round.hands_played == 0 then
+                card.ability.extra.Xmult = card.ability.extra.Xmult + (0.10 * context.full_hand[1].base.nominal)
+                return {
+                    message = "Upgrade!",
+                    remove = true
+                }
+            end
+        end
+        if context.joker_main then
+            return {
+                Xmult = card.ability.extra.Xmult
+            }
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'booster', --atlas key
+    path = 'booster.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'booster', --joker key
+    loc_txt = { -- local text
+        name = 'Booster Box',
+        text = {
+             "Creates a random Mega Pack tag",
+             "when selecting a {C:attention}Blind{}"
+        },
+    },
+    atlas = 'booster', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 8, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+       if context.setting_blind then
+        if math.random(1,4) == 1 then 
+            return {
+                func = function()
+                    G.E_MANAGER:add_event(Event({
+                        func = (function()
+                            -- local tag = Tag(pseudorandom_element(G.P_TAGS, "seed").key)
+                            -- tag:set_ability()
+                             add_tag(Tag('tag_buffoon'))
+                            play_sound('generic1', 0.9 + math.random() * 0.1, 0.8)
+                            play_sound('holo1', 1.2 + math.random() * 0.1, 0.4)
+                            return true
+                        end)
+                    }))
+                end
+            }
+        elseif math.random(1,4) == 2 then 
+            return {
+                func = function()
+                    G.E_MANAGER:add_event(Event({
+                        func = (function()
+                            -- local tag = Tag(pseudorandom_element(G.P_TAGS, "seed").key)
+                            -- tag:set_ability()
+                             add_tag(Tag('tag_charm'))
+                            play_sound('generic1', 0.9 + math.random() * 0.1, 0.8)
+                            play_sound('holo1', 1.2 + math.random() * 0.1, 0.4)
+                            return true
+                        end)
+                    }))
+                end
+            }
+        elseif math.random(1,4) == 3 then
+            return {
+                func = function()
+                    G.E_MANAGER:add_event(Event({
+                        func = (function()
+                            -- local tag = Tag(pseudorandom_element(G.P_TAGS, "seed").key)
+                            -- tag:set_ability()
+                             add_tag(Tag('tag_standard'))
+                            play_sound('generic1', 0.9 + math.random() * 0.1, 0.8)
+                            play_sound('holo1', 1.2 + math.random() * 0.1, 0.4)
+                            return true
+                        end)
+                    }))
+                end
+            }
+        else 
+            return {
+                func = function()
+                    G.E_MANAGER:add_event(Event({
+                        func = (function()
+                            -- local tag = Tag(pseudorandom_element(G.P_TAGS, "seed").key)
+                            -- tag:set_ability()
+                             add_tag(Tag('tag_meteor'))
+                            play_sound('generic1', 0.9 + math.random() * 0.1, 0.8)
+                            play_sound('holo1', 1.2 + math.random() * 0.1, 0.4)
+                            return true
+                        end)
+                    }))
+                end
+            }
+        end
+    end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'stop', --atlas key
+    path = 'sign.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'stop', --joker key
+    loc_txt = { -- local text
+        name = 'Stop Sign',
+        text = {
+                "This card give {C:red}+5{} Mult",
+                "for every {C:red}Debuffed{} card",
+                "played in a hand"
+        },
+    },
+    atlas = 'stop', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 5, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        mult = 5
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.mult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+
+
+        if context.joker_main then
+            local count = 0
+            for _, scored_card in ipairs(context.scoring_hand) do
+                    if scored_card.debuff then
+                        count = count + 1
+                    end
+            end 
+            return {
+                mult = card.ability.extra.mult * count
+            }
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'copycat', --atlas key
+    path = 'copycat.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'copycat', --joker key
+    loc_txt = { -- local text
+        name = 'Copycat',
+        text = {
+                "{X:mult,C:white}X1.5{} Mult for",
+                "every {C:attention}Double Tag{} owned",
+        },
+    },
+    atlas = 'copycat', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        Xmult = 1, extra = 1.5
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        local count = 0
+        for i = 1, #G.GAME.tags do
+            if G.GAME.tags[i].key == "tag_double" then
+            count = count + 1
+            end
+        end
+        if context.joker_main then
+            return 
+            {
+                Xmult = card.ability.extra.Xmult * count
+            }
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'mobius', --atlas key
+    path = 'mobius.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'mobius', --joker key
+    loc_txt = { -- local text
+        name = 'Mobius Strip',
+        text = {
+                "When playing a {C:attention}High Card{}",
+                "this Joker gives {C:red}Mult{} based on",
+                "the chips the {C:attention}playing card{} gives"
+        },
+    },
+    atlas = 'mobius', --atlas' key
+    rarity = 1, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        mult = 0
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.mult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play and G.GAME.current_round.current_hand.handname == "High Card" then
+            local temp_Mult, temp_ID = 15, 15
+            local slot_card = nil
+            for i = 1, #G.play.cards do
+                    temp_Mult = G.play.cards[i].base.nominal
+                    temp_ID = G.play.cards[i].base.id
+                    slot_card = G.play.cards[i]
+                    return {
+                        mult = card.ability.extra.mult + temp_Mult
+                    }
+            end
+            if slot_card == context.other_card then
+                if context.other_card.debuff then
+                    return {
+                        message = localize('k_debuffed'),
+                        colour = G.C.RED
+                    }
+                end
+            end
+        end
+
+
+
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'hang', --atlas key
+    path = 'hang.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'hang', --joker key
+    loc_txt = { -- local text
+        name = 'Hang Ten',
+        text = {
+                "{C:attention}10s{} give {C:blue}+10{} Chips",
+                "and {C:red}+10{} Mult"
+        },
+    },
+    atlas = 'hang', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        mult = 10, chips = 10
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.mult, center.ability.extra.chips}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+            if context.individual and context.cardarea == G.play then
+                if context.other_card:get_id() == 10 then
+                    return {
+                        mult = card.ability.extra.mult,
+                        chips = card.ability.extra.chips
+                    }
+                end
+            end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'hang', --atlas key
+    path = 'hang.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'hang', --joker key
+    loc_txt = { -- local text
+        name = 'Hang Ten',
+        text = {
+                "{C:attention}10s{} give {C:blue}+10{} Chips",
+                "and {C:red}+10{} Mult"
+        },
+    },
+    atlas = 'hang', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        mult = 10, chips = 10
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.mult, center.ability.extra.chips}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+            if context.individual and context.cardarea == G.play then
+                if context.other_card:get_id() == 10 then
+                    return {
+                        mult = card.ability.extra.mult,
+                        chips = card.ability.extra.chips
+                    }
+                end
+            end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'line', --atlas key
+    path = 'line.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'line', --joker key
+    loc_txt = { -- local text
+        name = 'Cutting the Line',
+        text = {
+                "Gain {C:blue}+2{} Hands and {C:red}+2{} Discards",
+                "When skipping the Small and Big Blind",
+                "during an Ante"
+        },
+    },
+    atlas = 'line', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        hands = 2, discards = 2, skips = 0
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.hands, center.ability.extra.discards, center.ability.extra.skips}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.skip_blind and not context.blueprint then
+            card.ability.extra.skips = card.ability.extra.skips + 1
+        end
+
+        if card.ability.extra.skips == 2 and context.setting_blind then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        ease_discard(card.ability.extra.discards)
+                        ease_hands_played(card.ability.extra.hands)
+                        SMODS.calculate_effect(
+                            { message = localize { type = 'variable', key = 'a_hands', vars = { card.ability.extra.hands } } },
+                            context.blueprint_card or card)
+                        return true
+                    end
+                }))
+                return nil, true -- This is for Joker retrigger purposes
+        end
+
+        if G.GAME.blind:get_type() == 'Boss' and context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint then
+                card.ability.extra.skips = 0
+                return {
+                    message = localize('k_reset'),
+                    colour = G.C.RED
+                }
+        end
+
+
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'true', --atlas key
+    path = 'true.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'true', --joker key
+    loc_txt = { -- local text
+        name = 'Adachi True',
+        text = {
+                "This Joker earns {C:blue}+20{} Chips",
+                "when all scored cards",
+                "add up to {C:attention}#1#{}",
+                "(The number changes every round)",
+                "{C:inactive}(Commissioned by @UnderscoreNeo){C:inactive}"
+        },
+    },
+    atlas = 'true', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 8, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        chips = 0, number = 10, extra = 20
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.number, center.ability.extra.chips, center.ability.extra.extra}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.setting_blind then 
+            card.ability.extra.number = math.random(2,40)
+        end
+        if context.before and context.main_eval and not context.blueprint then
+            local sum = 0
+            for _, scored_card in ipairs(context.scoring_hand) do
+                    local value = 0
+                    local id = scored_card:get_id()
+                    if id > 10 and id < 14 then
+                        value = 10
+                    elseif id == 14 then
+                        value = 11
+                    elseif id > 1 and id < 11 then
+                        value = id
+                    end
+
+                    if card.debuff then
+                        value = 0
+                    end
+
+                    sum = sum + value
+            end
+            
+            if sum == card.ability.extra.number then
+                card.ability.extra.chips = card.ability.extra.chips + card.ability.extra.extra
+                return {
+                    message = "TRUE!",
+                    colour = G.C.BLUE
+                }
+            end
+        end
+        if context.joker_main then
+            return {
+                chips = card.ability.extra.chips
+            }
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'comic', --atlas key
+    path = 'paper.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'comic', --joker key
+    loc_txt = { -- local text
+        name = 'Comic Strip',
+        text = {
+                "{C:attention}Retriggers{} all cards",
+                "if your played hand is a {C:attention}Straight{}"
+        },
+    },
+    atlas = 'comic', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 7, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        retriggers = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.retriggers}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.repetition then
+            if context.cardarea == G.play and G.GAME.current_round.current_hand.handname == "Straight" then
+                return {
+                    message = "Again!",
+                    repetitions = card.ability.extra.retriggers,
+                    card = card,
+                }
+            end
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'claw', --atlas key
+    path = 'claw.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'claw', --joker key
+    loc_txt = { -- local text
+        name = 'Claw Machine',
+        text = {
+                "This Joker either gives",
+                "a random {C:blue}Common{} or {C:red}Rare{} Joker, or",
+                "nothing at all when",
+                "selecting a {C:attention}Blind{}",
+        },
+    },
+    atlas = 'claw', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 7, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        retriggers = 1
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.retriggers}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if math.random(1,3) == 1 then
+            if context.setting_blind and #G.jokers.cards + G.GAME.joker_buffer < G.jokers.config.card_limit then
+                G.GAME.joker_buffer = G.GAME.joker_buffer + 1
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                            SMODS.add_card {
+                                set = 'Joker',
+                                rarity = 'Rare',
+                            }
+                            G.GAME.joker_buffer = 0
+                        return true
+                    end
+                }))
+            end
+        elseif math.random(1,3) == 2 then
+            if context.setting_blind and #G.jokers.cards + G.GAME.joker_buffer < G.jokers.config.card_limit then
+                G.GAME.joker_buffer = G.GAME.joker_buffer + 1
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                            SMODS.add_card {
+                                set = 'Joker',
+                                rarity = 'Common',
+                            }
+                            G.GAME.joker_buffer = 0
+                        return true
+                    end
+                }))
+            end
+        else 
+            return {
+					message = "LMAOOOOOO",
+				}
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'spotlight', --atlas key
+    path = 'spotlight.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'spotlight', --joker key
+    loc_txt = { -- local text
+        name = 'Spotlight',
+        text = {
+            "Cards with enhancements containing",
+            "{C:attention}held in hand effects{}",
+            "get activated when scored"
+
+        },
+    },
+    atlas = 'spotlight', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 8, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+       Xmult = 1.5, dollars = 3
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.x_chips}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+
+    calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play then 
+            for _, playing_card in ipairs(G.playing_cards) do
+                if SMODS.has_enhancement(playing_card, 'm_steel') then 
+                    return {
+                        Xmult = card.ability.extra.Xmult
+                    }
+                end
+                if SMODS.has_enhancement(playing_card, 'm_gold') then 
+                    return {
+                        dollars = card.ability.extra.dollars
+                    }
+                end
+            end
+        end
+    end,   
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'power', --atlas key
+    path = 'power.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'power', --joker key
+    loc_txt = { -- local text
+        name = 'Second Power',
+        text = {
+           "{C:attention}2s, 4s, and 8s{}",
+           "give {X:mult,C:white}X2{} Mult"
+
+        },
+    },
+    atlas = 'power', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+       Xmult = 2
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+
+    calculate = function(self, card, context)
+       if context.individual and context.cardarea == G.play then
+            if context.other_card:get_id() == 2 or
+                context.other_card:get_id() == 4 or
+                context.other_card:get_id() == 8 then
+                return {
+                    Xmult = card.ability.extra.Xmult
+                }
+            end
+        end
+    end,   
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'scammer', --atlas key
+    path = 'scammer.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'scammer', --joker key
+    loc_txt = { -- local text
+        name = 'Scalper',
+        text = {
+           "All {C:attention}booster packs{} are free,",
+           "Randomly lose $10 at the",
+           "beginning of each blind"
+
+        },
+    },
+    atlas = 'scammer', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+       dollars = 10
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.dollars}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    add_to_deck = function(self, card, from_debuff)
+        G.E_MANAGER:add_event(Event({
+            func = function()
+                for k, v in pairs(G.I.CARD) do
+                    if v.set_cost then v:set_cost() end
+                end
+                return true
+            end
+        }))
+    end,
+    remove_from_deck = function(self, card, from_debuff)
+        G.E_MANAGER:add_event(Event({
+            func = function()
+                for k, v in pairs(G.I.CARD) do
+                    if v.set_cost then v:set_cost() end
+                end
+                return true
+            end
+        }))
+    end,
+    calculate = function(self, card, context)
+        if context.setting_blind then
+            if math.random(3) == 3 then
+                return {
+                dollars = -card.ability.extra.dollars
+                }
+            end
+        end
+    end,   
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'ferris', --atlas key
+    path = 'ferris.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'ferris', --joker key
+    loc_txt = { -- local text
+        name = 'Ferris Wheel',
+        text = {
+           "Earn {C:money}$2{} with each {C:attention}#2#{} scored",
+           "(Rank resets and goes in order",
+           "the start of each round)"
+
+        },
+    },
+    atlas = 'ferris', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 6, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+       dollars = 2
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.dollars, localize(SMODS.Ranks[(function() for k, v in pairs(SMODS.Ranks) do if v.id == ((G.GAME.round % (SMODS.Rank.max_id.value-1))+1) then return v.key end end return 'Ace' end)()].key , 'ranks')}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play then
+            if context.other_card:get_id() == (G.GAME.round % (SMODS.Rank.max_id.value-1))+1 then
+                return {
+                    dollars = card.ability.extra.dollars
+                }
+            end
+        end
+    end,   
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'stoplight', --atlas key
+    path = 'stoplight.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'stoplight', --joker key
+    loc_txt = { -- local text
+        name = 'Stop Light',
+        text = {
+           "{V:1}#2#{} gives {X:mult,C:white}X3{} Mult,",
+           "all other suits are debuffed",
+           "(Suit changes every round)"
+
+        },
+    },
+    atlas = 'stoplight', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+       Xmult = 3, suit = pseudorandom_element(SMODS.Suits, "seed").key
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return { vars = {center.ability.extra.Xmult, center.ability.extra.suit, localize(center.ability.extra.suit, 'suits_plural'), colours = { G.C.SUITS[center.ability.extra.suit] } } }
+    end,
+    update = function(self, card, dt)
+		if G.deck and card.added_to_deck then
+			for i, v in pairs(G.deck.cards) do
+				if not (v:is_suit(card.ability.extra.suit)) then
+					v:set_debuff(true)
+				end
+			end
+		end
+		if G.hand and card.added_to_deck then
+			for i, v in pairs(G.hand.cards) do
+				if not (v:is_suit(card.ability.extra.suit)) then
+					v:set_debuff(true)
+				end
+			end
+		end
+	end,
+    calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play and context.other_card:is_suit(card.ability.extra.suit) then
+            return {
+                    Xmult = card.ability.extra.Xmult
+            }
+        end
+        if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint then
+            card.ability.extra.suit = pseudorandom_element(SMODS.Suits, "seed").key
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'duck', --atlas key
+    path = 'duck.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'duck', --joker key
+    loc_txt = { -- local text
+        name = 'Rubber Duck',
+        text = {
+           "{C:spades}Spades{} activate a random effect",
+
+        },
+    },
+    atlas = 'duck', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+       Xmult = 1.5, x_chips = 1.5, mult = 5, chips = 10, retriggers = 1, dollars = 3
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return { vars = {center.ability.extra.Xmult, center.ability.extra.x_chips, center.ability.extra.mult, center.ability.extra.chips, center.ability.extra.dollars, center.ability.extra.retriggers} }
+    end,
+    calculate = function(self, card, context)
+       if context.repetition then
+            if context.cardarea == G.play and context.other_card:get_id() == 14 then
+                return {
+                    message = "Again!",
+                    repetitions = card.ability.extra.retriggers,
+                    card = card,
+                }
+            end
+        end
+        if context.individual and context.cardarea == G.play then
+            if context.other_card:is_suit("Spades") then
+                if (math.random(1,5) == 1) then
+                return {
+                    dollars = card.ability.extra.dollars
+                }
+                elseif (math.random(1,5) == 2) then
+                return {
+                    mult = card.ability.extra.mult
+                }
+                elseif (math.random(1,5) == 3) then
+                return {
+                    Xmult = card.ability.extra.Xmult
+                }
+                elseif (math.random(1,5) == 4) then
+                return {
+                    chips = card.ability.extra.chips
+                }
+                else
+                return {
+                    x_chips = card.ability.extra.x_chips
+                }
+                end
+            end
+        end
+        if context.discard and not context.blueprint and context.other_card:is_suit("Spades") then
+            if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                        local card = create_card("Consumeables", G.consumeables, nil, nil, nil, nil, nil, "duck")
+                        card:add_to_deck()
+                        G.consumeables:emplace(card)
+            end
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+
+SMODS.Atlas {
+   key = 'infinite', --atlas key
+    path = 'infinite.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'infinite', --joker key
+    loc_txt = { -- local text
+        name = 'Infinity',
+        text = {
+           "{C:pink}Eternal{} Jokers give {X:mult,C:white}X2{} Mult",
+
+        },
+    },
+    atlas = 'infinite', --atlas' key
+    rarity = 2, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 10, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+       Xmult = 2
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return { vars = {center.ability.extra.Xmult} }
+    end,
+    calculate = function(self, card, context)
+      if context.other_joker and SMODS.is_eternal(context.other_joker, card) then
+            return {
+                Xmult = card.ability.extra.Xmult
+            }
+        end
+    end,
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'moon', --atlas key
+    path = 'moon.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'moon', --joker key
+    loc_txt = { -- local text
+        name = 'Moon',
+        text = {
+                "When playing a hand",
+                "containing a {C:attention}Full House{}",
+                "Each card gives {C:blue}+27{} Chips",
+        },s
+    },
+    atlas = 'moon', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 8, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        chips = 27
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.chips}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play and next(context.poker_hands["Full House"]) then
+            for i = 1, #G.play.cards do
+                    return {
+                        chips = card.ability.extra.chips 
+                    }
+            end
+            if slot_card == context.other_card then
+                if context.other_card.debuff then
+                    return {
+                        message = localize('k_debuffed'),
+                        colour = G.C.RED
+                    }
+                end
+            end
+        end
+    end,
+        
+    in_pool = function(self,wawa,wawa2)
+        --whether or not this card is in the pool, return true if it is, return false if its not
+        return true
+    end,
+}
+
+SMODS.Atlas {
+   key = 'rat', --atlas key
+    path = 'rat.png', --atlas' path in (yourMod)/assets/1x or (yourMod)/assets/2x
+    px = 71, --width of one card
+    py = 95 -- height of one card
+}
+
+SMODS.Joker{
+    key = 'rat', --joker key
+    loc_txt = { -- local text
+        name = 'The Rat',
+        text = {
+                "When destroying a Joker to the right,",
+                "any other Joker of the {C:attention}same rarity{}",
+                "don't appear for one shop visit"
+        },s
+    },
+    atlas = 'rat', --atlas' key
+    rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
+    --soul_pos = { x = 0, y = 0 },
+    cost = 12, --cost
+    unlocked = true, --where it is unlocked or not: if true, 
+    discovered = true, --whether or not it starts discovered
+    blueprint_compat = true, --can it be blueprinted/brainstormed/other
+    eternal_compat = true, --can it be eternal
+    perishable_compat = true, --can it be perishable
+    pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
+    config = { 
+      extra = {
+        new_rate = 0
+      }
+    },
+    loc_vars = function(self,info_queue,center)
+        return {vars = {center.ability.extra.new_rate}} --#1# is replaced with card.ability.extra.Xmult
+    end,
+    calculate = function(self, card, context)
+        local my_pos = nil
+		for i = 1, #G.jokers.cards do
+			if G.jokers.cards[i] == card then
+				my_pos = i
+				break
+			end
+		end
+        if context.ending_shop then
+                 G.GAME.uncommon_mod = 12
+                 G.GAME.rare_mod = 7
+                 G.GAME.common_mod = 18
+        end
+		if
+			context.setting_blind
+			and not (context.blueprint_card or self).getting_sliced
+			and my_pos
+			and G.jokers.cards[my_pos + 1]
+			and not G.jokers.cards[my_pos + 1].ability.eternal
+			and not G.jokers.cards[my_pos + 1].getting_sliced
+		then
+			local sliced_card = G.jokers.cards[my_pos + 1]
+			sliced_card.getting_sliced = true
+			G.GAME.joker_buffer = G.GAME.joker_buffer - 1
+			G.E_MANAGER:add_event(Event({
+				func = function()
+					G.GAME.joker_buffer = 0
+					card:juice_up(0.8, 0.8)
+					sliced_card:start_dissolve({ HEX("57ecab") }, nil, 1.6)
+					return true
+				end,
+			}))
+            if sliced_card.config.center.rarity == 2 or sliced_card.config.center.rarity == "Uncommon" then 
+                G.GAME.uncommon_mod = G.GAME.uncommon_mod * card.ability.extra.new_rate
+            elseif sliced_card.config.center.rarity == 3 or sliced_card.config.center.rarity == "Rare" then 
+                 G.GAME.rare_mod = G.GAME.rare_mod * card.ability.extra.new_rate
+            else
+                 G.GAME.common_mod = G.GAME.common_mod * card.ability.extra.new_rate
+            end
+			return nil, true
+        end
+    end,
+}
+
+
+function SMODS.current_mod.reset_game_globals(run_start)
+    reset_hitman_card()
+    reset_neo_card()
+    reset_fih_card_1()
+    reset_fih_card_2()
+    reset_cheat_card()
+    -- reset_ferris_card()
+end
 ----------------------Legendaries-------------------------------------
 ----------------------------------------------------------------------
 
@@ -5355,11 +7837,12 @@ SMODS.Joker{
     soul_pos = {x=0, y= 1},
     config = { extra = {extra = 7, odds = 2}},
 	loc_vars = function(self, info_queue, center)
-        return { vars = {center.ability.extra.extra, (G.GAME.probabilities.normal or 1), center.ability.extra.odds} }
+        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, odds, 'identifier') 
+        return {vars = {center.ability.extra.extra, new_numerator, new_denominator}} --#1# is replaced with card.ability.extra.Xmult
 	end,
     calculate = function(self, card, context)
             if context.destroy_card and not context.blueprint then
-                if pseudorandom("sizimod_broly") < G.GAME.probabilities.normal / card.ability.extra.odds then
+               if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
                     if context.destroy_card == context.full_hand[1] then
                             return {
                                 remove = true,
@@ -5390,6 +7873,7 @@ local gotenks_music = SMODS.Sound{
         end
     end
 }
+
 SMODS.Atlas{
     key = 'gotenks',
     path = 'gotenks.png',
@@ -5473,6 +7957,63 @@ SMODS.Joker{
                     }))
                 end
             }
+        end
+	end,
+}
+
+
+local four_music = SMODS.Sound{
+    key = "fourmusic",
+    path = "music_four.ogg",
+    sync = false,
+    pitch = 1,
+    select_music_track = function(self)
+        if sizi.config.fourgeta == 1 and #SMODS.find_card("j_sizimod_fourgeta") > 0 then
+            -- When Gogeta 4 is present
+            return 100
+        else
+            -- always disabled
+        end
+    end
+}
+
+SMODS.Atlas{
+    key = 'fourgeta',
+    path = 'fourgeta.png',
+    px = 71,
+    py = 96,
+}
+
+SMODS.Joker{
+    key = 'fourgeta',
+    loc_txt= {
+        name = 'SSJ4 Gogeta',
+        text = { "When playing a {C:attention}four card hand{},",
+        "all scored cards give {X:mult,C:white}X2{} Mult and {X:chips,C:white}X2{} Chips",
+            }
+    },
+    atlas = 'fourgeta',
+    rarity = 4,
+    cost = 20,
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    pos = {x=0, y= 0},
+    soul_pos = {x=0, y= 1},
+    config = { extra = {Xmult = 2, x_chips = 2}},
+	loc_vars = function(self, info_queue, center)
+        return {vars = {center.ability.extra.Xmult, center.ability.extra.x_chips}} --#1# is replaced with card.ability.extra.Xmult
+	end,
+    calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play and not context.end_of_round and #context.scoring_hand == 4 then
+            for i = 1, #G.play.cards do
+                return {
+                        Xmult = card.ability.extra.Xmult,
+                        x_chips = card.ability.extra.x_chips
+                }
+            end
         end
 	end,
 }
@@ -5658,7 +8199,7 @@ SMODS.Joker{
         text = { 
             "All Face cards are considered {C:attention}Kings{}",
             "and all {C:attention}Kings{} give",
-            "{C:money}$3{} and {X:chips,C:white}X2{} Chips"
+            "{X:chips,C:white}X2{} Chips"
             }
     },
     atlas = 'will',
@@ -5671,7 +8212,7 @@ SMODS.Joker{
     perishable_compat = true,
     pos = {x=0, y= 0},
     soul_pos = {x=0, y= 1},
-    config = { extra = {dollars = 3, x_chips = 2} },
+    config = { extra = {x_chips = 2} },
 	loc_vars = function(self, info_queue, center)
         return { vars = {center.ability.extra.dollars, center.ability.extra.x_chips} }
 	end,
@@ -5707,11 +8248,55 @@ SMODS.Joker{
         if context.individual and context.cardarea == G.play and
             context.other_card:get_id() == 13 then
             return {
-                x_chips = card.ability.extra.x_chips,
+                x_chips = card.ability.extra.x_chips
+            }
+        end
+    end,
+}
+
+SMODS.Atlas{
+    key = 'ronald',
+    path = 'ronald.png',
+    px = 71,
+    py = 96,
+}
+SMODS.Joker{
+    key = 'ronald',
+    loc_txt= {
+        name = 'Ronald McDonald',
+        text = { 
+            "Earn {X:money,C:white}X3{} your total money",
+            "and {C:money}$3{} with every playing card scored",
+            }
+    },
+    atlas = 'ronald',
+    rarity = 4,
+    cost = 20,
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    pos = {x=0, y= 0},
+    soul_pos = {x=0, y= 1},
+    config = { extra = {dollars = 3} },
+	loc_vars = function(self, info_queue, center)
+        return { vars = {center.ability.extra.dollars} }
+	end,
+    calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play then
+            return {
                 dollars = card.ability.extra.dollars
             }
         end
     end,
+    calc_dollar_bonus = function(self, card)
+		if G.GAME.dollars > to_big(0) then
+            return to_number(card.ability.extra.extra_dollars) * (G.GAME.dollars or 1)
+		else
+			return 0
+		end
+	end,
 }
 ----------------Decks-------------------------
 
@@ -6477,7 +9062,6 @@ SMODS.Back({
             func = function()
                 local space_jonkers = {"j_sizimod_blackhole", "j_sizimod_belt", "j_sizimod_alien","j_sizimod_eclipse","j_sizimod_solar","j_sizimod_star","j_rocket","j_constellation","j_astronomer","j_satellite","j_space"}
                 local space = pseudorandom_element(space_jonkers, pseudoseed('exampleseed'))
-                print(space)
                 if G.consumeables then
                     SMODS.add_card {
                             key = space,
