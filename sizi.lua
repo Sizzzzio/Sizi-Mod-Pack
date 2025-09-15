@@ -305,7 +305,7 @@ SMODS.Joker{
     loc_txt= {
         name = 'Spunch Bop',
         text = { "",
-                    "{C:green}#2# in #3#{} chance to give {X:chips,C:white} +#1#{} Chips",}
+                    "{C:green}#2# in 4{} chance to give {X:chips,C:white} +#1#{} Chips",}
     },
     atlas = 'spunchbop',
     rarity = 1,
@@ -613,7 +613,7 @@ SMODS.Joker{
             'Destroys a Joker to the right',
             'to create another {C:attention}Weegee',
             "that copies the {C:attention}edition{}",
-            "as the destroyed Joker",
+            "of the destroyed Joker",
             '{X:mult,C:white}X#1#{} Mult per {C:attention}Weegee',
 
         },
@@ -3231,7 +3231,7 @@ SMODS.Joker{
         name = 'Game Show Host',
         text = {
             "When playing a {C:attention}#2#{},",
-            "this Joker gives {X:mult,C:white}X2{} Mult",
+            "this Joker gives {X:mult,C:white}X4{} Mult",
             "Otherwise, lose {C:blue}20{} Chips and {C:red}5{} Mult,",
              "poker hand changes",
             "at the end of round",
@@ -3250,7 +3250,7 @@ SMODS.Joker{
     pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
     config = { 
       extra = {
-      Xmult = 3, mult = 0, chips = 0, poker_hand = "High Card"
+      Xmult = 4, mult = 0, chips = 0, poker_hand = "High Card"
       }
     },
     loc_vars = function(self,info_queue,center)
@@ -4615,7 +4615,6 @@ SMODS.Joker{
         text = {
            "{X:mult,C:white}X0.2{} Mult for every",
            "{C:green}probability{} that fails",
-           "during a Blind",
             "{C:inactive}(Currently {X:mult,C:white}X#1#{C:inactive} Mult)"
         },
     },
