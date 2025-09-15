@@ -2,7 +2,7 @@
 A collection of Jokers and other stuff based off ideas tossed around with some friends for Balatro 
 
 # This Mod Currently Includes
-- 81 new Jokers with varying degrees of balance
+- 120 new Jokers with varying degrees of balance
 - 13 new custom Decks to try out
 - 9 new Vouchers
   
