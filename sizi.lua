@@ -7026,8 +7026,8 @@ SMODS.Joker{
         return {vars = {center.ability.extra.retriggers}} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self, card, context)
-        if math.random(1,3) == 1 then
-            if context.setting_blind and #G.jokers.cards + G.GAME.joker_buffer < G.jokers.config.card_limit then
+        if context.setting_blind and #G.jokers.cards + G.GAME.joker_buffer < G.jokers.config.card_limit then
+            if math.random(1,3) == 1 then
                 G.GAME.joker_buffer = G.GAME.joker_buffer + 1
                 G.E_MANAGER:add_event(Event({
                     func = function()
@@ -7039,9 +7039,7 @@ SMODS.Joker{
                         return true
                     end
                 }))
-            end
-        elseif math.random(1,3) == 2 then
-            if context.setting_blind and #G.jokers.cards + G.GAME.joker_buffer < G.jokers.config.card_limit then
+            elseif math.random(1,3) == 2 then
                 G.GAME.joker_buffer = G.GAME.joker_buffer + 1
                 G.E_MANAGER:add_event(Event({
                     func = function()
@@ -7053,11 +7051,11 @@ SMODS.Joker{
                         return true
                     end
                 }))
-            end
-        else 
+            else
             return {
 					message = "LMAOOOOOO",
 				}
+            end
         end
     end,
         
