@@ -5922,13 +5922,11 @@ SMODS.Joker{
         return {vars = {center.ability.extra.Xmult}} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self, card, context) 
-        if context.individual and context.cardarea == G.play then 
-            for _, playing_card in ipairs(G.playing_cards) do
-                if playing_card.edition == "e_holo" then 
-                    return {
-                        mult = card.ability.extra.mult
-                    }
-                end
+        if context.individual and context.cardarea == G.play then
+            if context.other_card and context.other_card.edition and context.other_card.edition.key == "e_holo" then
+                return {
+                    Xmult = card.ability.extra.Xmult
+                }
             end
         end
     end,
@@ -9044,7 +9042,7 @@ SMODS.Back({
         text={
         "Start run with",
         "{C:attention}Telescope and Observatory{}",
-        "and a random {C:attention}Eternal{}",
+        "and a random",
         "Space-themed Joker"
         },
     },
