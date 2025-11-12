@@ -1483,12 +1483,12 @@ SMODS.Joker{
             "{X:mult,C:white}X1{}",
             "and {C:money}$1{} for",
             "every {C:money}$10{}",
-            "(Currently: {C:money}$#4#{})",
-            "(Currently: {X:mult, C:white}X#1#{})"
+            "(Currently: {C:money}$#5#{})",
+            "(Currently: {X:mult,C:white}X#5#{})"
 
         },
     },
-    atlas = 'morshu', --atlas' key
+    atlas = 'morshu', --atlas' keys
     rarity = 3, --rarity: 1 = Common, 2 = Uncommon, 3 = Rare, 4 = Legendary
     --soul_pos = { x = 0, y = 0 },
     cost = 10, --cost
@@ -1507,7 +1507,7 @@ SMODS.Joker{
       }
     },
     loc_vars = function(self,info_queue,center)
-        return {vars = {center.ability.extra.Xmult, center.ability.extra.dollars, center.ability.extra.extra_dollars, center.ability.extra.earned, center.ability.extra.Xmult * math.floor(((G.GAME.dollars or 0) + (G.GAME.dollar_buffer or 0)) / center.ability.extra.dollars) }} --#1# is replaced with card.ability.extra.Xmult
+        return {vars = {center.ability.extra.Xmult, center.ability.extra.dollars, center.ability.extra.extra_dollars, center.ability.extra.earned, center.ability.extra.Xmult * math.floor(((G.GAME.dollars or 0) + (G.GAME.dollar_buffer or 0)) / center.ability.extra.dollars), center.ability.extra.extra_dollars * math.floor(((to_number(G.GAME.dollars) or 0) + (to_number(G.GAME.dollar_buffer) or 0)) / center.ability.extra.earned) }} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self,card,context)
         if context.joker_main then
