@@ -1296,31 +1296,48 @@ SMODS.Joker {
         G.GAME.uncommon_mod = G.GAME.uncommon_mod / card.ability.extra.new_rate
         G.GAME.rare_mod = G.GAME.rare_mod / card.ability.extra.new_rate
     end,
-    calculate = function(self, card, context) 
-        if context.setting_blind and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
-             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
-             if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
-
-                return {
-                    extra = {
-                        func = function() -- This is for timing purposes, everything here runs after the message
-                            G.E_MANAGER:add_event(Event({
-                                func = (function()
-                                    SMODS.add_card {
-                                        key = 'c_soul',
-                                    }
-                                    G.GAME.consumeable_buffer = 0
-                                    return true
-                                end)
-                            }))
-                        end
-                    },
-                }
-            else
-                -- Nothing
+    calculate = function(self, card, context)
+        if  context.setting_blind and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+            if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
+                G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                G.E_MANAGER:add_event(Event({
+                    trigger = 'before',
+                    delay = 0.0,
+                    func = (function()
+                        SMODS.add_card {
+                            key = 'c_soul'
+                        }
+                        G.GAME.consumeable_buffer = 0
+                        return true
+                    end)
+                }))
             end
         end
-	end,
+    end,
+    -- calculate = function(self, card, context) 
+    --     if context.setting_blind and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+    --          if SMODS.pseudorandom_probability(card, 'seed', 1, card.ability.extra.odds, 'identifier') then
+
+    --             return {
+    --                 extra = {
+    --                     func = function() -- This is for timing purposes, everything here runs after the message
+    --                         G.E_MANAGER:add_event(Event({
+    --                             func = (function()
+    --                                 SMODS.add_card {
+    --                                     key = 'c_soul',
+    --                                 }
+    --                                 G.GAME.consumeable_buffer = 0
+    --                                 return true
+    --                             end)
+    --                         }))
+    --                     end
+    --                 },
+    --             }
+    --         else
+    --             -- Nothing
+    --         end
+    --     end
+	-- end,
 }
 
 SMODS.Atlas {
@@ -1465,7 +1482,9 @@ SMODS.Joker{
         text = {
             "{X:mult,C:white}X1{}",
             "and {C:money}$1{} for",
-            "every {C:money}$10{}"
+            "every {C:money}$10{}",
+            "(Currently: {C:money}$#4#{})",
+            "(Currently: {X:mult, C:white}X#1#{})"
 
         },
     },
@@ -3232,7 +3251,7 @@ SMODS.Joker{
         text = {
             "When playing a {C:attention}#2#{},",
             "this Joker gives {X:mult,C:white}X4{} Mult",
-            "Otherwise, lose {C:blue}20{} Chips and {C:red}5{} Mult,",
+            "Otherwise, lose {C:blue}20{} Chips and {C:red}20{} Mult,",
              "poker hand changes",
             "at the end of round",
 
@@ -3264,7 +3283,7 @@ SMODS.Joker{
         elseif  context.joker_main and context.scoring_name ~= card.ability.extra.poker_hand then
             return {
                 chips = card.ability.extra.chips - 20,
-                mult = card.ability.extra.mult - 5
+                mult = card.ability.extra.mult - 20
             }
         end
 
@@ -4428,7 +4447,7 @@ SMODS.Joker{
                 card.ability.extra.discards_remaining = card.ability.extra.discards
                 card.ability.extra.dollars = card.ability.extra.dollars - 1
                 return {
-                    message = "Biten!"
+                    message = "Bitten!"
                     
                 }
         end
@@ -4456,6 +4475,10 @@ SMODS.Joker{
                     message = "Eaten!"
                 }
         end
+    end,
+
+    calc_dollar_bonus = function(self, card)
+            return to_number(card.ability.extra.dollars) 
     end,
  
     in_pool = function(self,wawa,wawa2)
@@ -6639,11 +6662,11 @@ SMODS.Joker{
     pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
     config = { 
       extra = {
-        mult = 0
+        mult = 0, bonus_chips = 30, foil_chips = 50
       }
     },
     loc_vars = function(self,info_queue,center)
-        return {vars = {center.ability.extra.mult}} --#1# is replaced with card.ability.extra.Xmult
+        return {vars = {center.ability.extra.mult, center.ability.extra.bonus_chips, center.ability.extra.foil_chips}} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play and G.GAME.current_round.current_hand.handname == "High Card" then
@@ -6653,6 +6676,16 @@ SMODS.Joker{
                     temp_Mult = G.play.cards[i].base.nominal
                     temp_ID = G.play.cards[i].base.id
                     slot_card = G.play.cards[i]
+                    if SMODS.has_enhancement(G.play.cards[i], 'm_bonus') then
+                        return {
+                            mult = card.ability.extra.mult + temp_Mult + card.ability.extra.bonus_chips
+                        }
+                    end
+                    if G.play.cards[i].edition and G.play.cards[i].edition.foil then
+                        return {
+                            mult = card.ability.extra.mult + temp_Mult + card.ability.extra.foil_chips
+                        }
+                    end
                     return {
                         mult = card.ability.extra.mult + temp_Mult
                     }
@@ -6665,10 +6698,8 @@ SMODS.Joker{
                     }
                 end
             end
+
         end
-
-
-
     end,
         
     in_pool = function(self,wawa,wawa2)
@@ -6689,8 +6720,8 @@ SMODS.Joker{
     loc_txt = { -- local text
         name = 'Hang Ten',
         text = {
-                "{C:attention}10s{} give {C:blue}+10{} Chips",
-                "and {C:red}+10{} Mult"
+                "{C:attention}10s{} give {C:blue}+10{} Chips,",
+                "{C:red}+10{} Mult, and are retriggered"
         },
     },
     atlas = 'hang', --atlas' key
@@ -6705,7 +6736,7 @@ SMODS.Joker{
     pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
     config = { 
       extra = {
-        mult = 10, chips = 10
+        mult = 10, chips = 10, retriggers = 1
       }
     },
     loc_vars = function(self,info_queue,center)
@@ -6717,6 +6748,15 @@ SMODS.Joker{
                     return {
                         mult = card.ability.extra.mult,
                         chips = card.ability.extra.chips
+                    }
+                end
+            end
+            if context.repetition then
+                if context.cardarea == G.play and context.other_card:get_id() == 10 then
+                    return {
+                        message = "Again!",
+                        repetitions = card.ability.extra.retriggers,
+                        card = card,
                     }
                 end
             end
@@ -6867,6 +6907,7 @@ SMODS.Joker{
                 "when all scored cards",
                 "add up to {C:attention}#1#{}",
                 "(The number changes every round)",
+                 "{C:inactive}(Currently: {C:blue}+#2#{} Chips{C:inactive})",
                 "{C:inactive}(Commissioned by @UnderscoreNeo){C:inactive}"
         },
     },
@@ -7074,9 +7115,8 @@ SMODS.Joker{
     loc_txt = { -- local text
         name = 'Spotlight',
         text = {
-            "Cards with enhancements containing",
-            "{C:attention}held in hand effects{}",
-            "get activated when scored"
+            "Cards with enhancements are",
+            "{C:attention}retriggered{} 3 times"
 
         },
     },
@@ -7092,32 +7132,29 @@ SMODS.Joker{
     pos = {x = 0, y = 0}, --position in atlas, starts at 0, scales by the atlas' card size (px and py): {x = 1, y = 0} would mean the sprite is 71 pixels to the right
     config = { 
       extra = {
-       Xmult = 1.5, dollars = 3
+       retriggers = 3
       }
     },
     loc_vars = function(self,info_queue,center)
-        return {vars = {center.ability.extra.x_chips}} --#1# is replaced with card.ability.extra.Xmult
+        return {vars = {center.ability.extra.retriggers}} --#1# is replaced with card.ability.extra.Xmult
     end,
 
     calculate = function(self, card, context)
-        if context.individual and context.cardarea == G.play then 
-            for _, playing_card in ipairs(G.playing_cards) do
-                if SMODS.has_enhancement(playing_card, 'm_steel') then 
-                    return {
-                        Xmult = card.ability.extra.Xmult
-                    }
-                end
-                if SMODS.has_enhancement(playing_card, 'm_gold') then 
-                    return {
-                        dollars = card.ability.extra.dollars
-                    }
-                end
+        if context.repetition then
+            if context.cardarea == G.play and next(SMODS.get_enhancements(context.other_card)) then
+                return {
+                    message = "Again!",
+                    repetitions = card.ability.extra.retriggers,
+                    card = card,
+                }
             end
         end
-    end,   
-    in_pool = function(self,wawa,wawa2)
-        --whether or not this card is in the pool, return true if it is, return false if its not
-        return true
+        if context.repetition and context.cardarea == G.hand and (next(context.card_effects[1]) or #context.card_effects > 1) then
+            return {
+                message = "Again!",
+                repetitions = card.ability.extra.retriggers,
+            }
+        end
     end,
 }
 
