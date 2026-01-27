@@ -5844,15 +5844,11 @@ SMODS.Joker{
         return {vars = {center.ability.extra.mult}} --#1# is replaced with card.ability.extra.Xmult
     end,
     calculate = function(self, card, context) 
-        if context.individual and context.cardarea == G.play then 
-            for _, playing_card in ipairs(G.playing_cards) do
-                if SMODS.has_enhancement(playing_card, 'm_stone') then 
-                    return {
-                        mult = card.ability.extra.mult
-                    }
-                end
+            if context.individual and  context.cardarea == G.play and SMODS.has_enhancement(context.other_card, 'm_stone') then
+                return {
+                    mult = card.ability.extra.mult
+                }
             end
-        end
     end,
     in_pool = function(self,wawa,wawa2)
         --whether or not this card is in the pool, return true if it is, return false if its not
@@ -8297,8 +8293,8 @@ SMODS.Joker{
     loc_txt= {
         name = 'Ronald McDonald',
         text = { 
-            "Earn {X:money,C:white}X3{} your total money",
-            "and {C:money}$3{} with every playing card scored",
+            "Earn {C:money}$1{} with every playing card scored",
+            "and earn {C:money}X3{} your money when beating a blind"
             }
     },
     atlas = 'ronald',
@@ -8311,7 +8307,7 @@ SMODS.Joker{
     perishable_compat = true,
     pos = {x=0, y= 0},
     soul_pos = {x=0, y= 1},
-    config = { extra = {dollars = 3} },
+    config = { extra = {dollars = 1} },
 	loc_vars = function(self, info_queue, center)
         return { vars = {center.ability.extra.dollars} }
 	end,
@@ -8323,11 +8319,7 @@ SMODS.Joker{
         end
     end,
     calc_dollar_bonus = function(self, card)
-		if G.GAME.dollars > to_big(0) then
-            return to_number(card.ability.extra.extra_dollars) * (G.GAME.dollars or 1)
-		else
-			return 0
-		end
+        return 3 * math.floor(((G.GAME.dollars or 0) + (G.GAME.dollar_buffer or 0)))
 	end,
 }
 ----------------Decks-------------------------
@@ -9382,7 +9374,1013 @@ SMODS.Voucher {
         G.GAME.sizimod_rental_rate = 0.1
     end
 }
+----------------------- CONSOOMABLES-----------------------
+-- SMODS.ConsumableType{
+--     key = 'ZodiacConsumableType', --consumable type key
+--     collection_rows = {3,3}, --amount of cards in one page
+--     primary_colour = G.C.RED, --first color
+--     secondary_colour = G.C.RED, --second color
+--     loc_txt = {
+--         collection = 'Zodiac Cards', --name displayed in collection
+--         name = 'Zodiac', --name displayed in badge
+--         undiscovered = {
+-- 			name = "Not Discovered",
+-- 			text = { "Purchase or use", "this card in an", "unseeded run to", "learn what it does" },
+-- 		},
+--     },
+--     shop_rate = 1, --rate in shop out of 100
+-- }
 
+-- SMODS.Atlas{
+--     key = 'z_aqua',
+--     path = 'z_aqua.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_aqua', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_aqua', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Aquarius', --name of card
+--         text = { --text of card
+--             "+1 {C:blue}Hand{} and {C:red}Discard{},",
+--             "{C:money}-$35{}"
+--         }
+--     },
+--     config = {
+--         extra = {
+--             hands = 1, discards = 1, dollars = 35, --configurable value
+--         }
+--     },
+--     loc_vars = function(self,info_queue, center)
+--         return {vars = {center.ability.extra.dollars, center.ability.extra.hands, center.ability.extra.discards }} --displays configurable value: the #1# in the description is replaced with the configurable value
+--     end,
+--     use = function(self,card,area,copier)
+--         G.GAME.round_resets.hands = G.GAME.round_resets.hands + card.ability.extra.hands
+--         ease_hands_played(card.ability.extra.hands)
+--         G.GAME.round_resets.discards = G.GAME.round_resets.discards + card.ability.extra.discards
+--         ease_discard(card.ability.extra.discards)
+--         ease_dollars(-card.ability.extra.dollars)
+--     end,
+--     can_use = function(self, card)
+--         return true
+--     end,
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_gemini',
+--     path = 'z_gemini.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_gemini', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_gemini', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Gemini', --name of card
+--         text = { --text of card
+--             "Duplicates a selected Joker",
+--             "and adds an {C:attention}Perishable{} Sticker"
+--         }
+--     },
+--     config = { max_highlighted = 1 },
+--     loc_vars = function(self, info_queue, card)
+--         return { vars = { card.ability.max_highlighted } }
+--     end,
+--     use = function(self, card, area, copier)
+--        local chosen_joker = G.jokers.highlighted[1]
+--        G.E_MANAGER:add_event(Event({
+--             trigger = 'before',
+--             delay = 0.4,
+--             func = function()
+--                 local copied_joker = copy_card(chosen_joker, nil, nil, nil,
+--                     chosen_joker.edition and chosen_joker.edition.negative)
+--                 copied_joker:start_materialize()
+--                 copied_joker:add_to_deck()
+--                 copied_joker.ability.perishable = true
+--                 G.jokers:emplace(copied_joker)
+--                 return true
+--             end
+--         }))
+--     end,
+--     can_use = function(self, card)
+--         return #G.jokers.highlighted <= card.ability.max_highlighted and #G.jokers.highlighted > 0
+--     end
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_cancer',
+--     path = 'z_cancer.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_cancer', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_cancer', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Cancer', --name of card
+--         text = { --text of card
+--             "{C:money}+$5{} for every Ante won",
+--             "{C:inactive}(Currently: {C:money}$#1#{C:inactive} Dollars)"
+--         }
+--     },
+--     config = { dollars = 5 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.dollars * G.GAME.round_resets.blind_ante } }
+--     end,
+--     use = function(self, card, area, copier)
+--        ease_dollars(G.GAME.round_resets.blind_ante * card.ability.dollars)
+--     end,
+--     can_use = function(self, card)
+--         return true
+--     end
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_pisces',
+--     path = 'z_pisces.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_pisces', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_pisces', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Pisces', --name of card
+--         text = { --text of card
+--             "Creates 2 {C:planet}Planet{} cards based on",
+--             "the last played hand in the run"
+--         }
+--     },
+--     config = { dollars = 5 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.dollars * G.GAME.round_resets.blind_ante } }
+--     end,
+--     use = function(self, card, area, copier)
+--         G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.0,
+--                 func = function()
+--                     if G.GAME.last_hand_played then
+--                         local _planet = nil
+--                         for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+--                             if v.config.hand_type == G.GAME.last_hand_played then
+--                                 _planet = v.key
+--                             end
+--                         end
+--                         if _planet then
+--                             for i = 1, math.min(2, G.consumeables.config.card_limit - #G.consumeables.cards) do
+--                                 if G.consumeables.config.card_limit > #G.consumeables.cards then
+--                                     SMODS.add_card({ key = _planet })
+--                                 end
+--                             end
+--                         end
+--                         G.GAME.consumeable_buffer = 0
+--                     end
+--                     return true
+--                 end
+--         }))
+--     end,
+--     can_use = function(self, card)
+--         return G.consumeables and #G.consumeables.cards < G.consumeables.config.card_limit or
+--             (card.area == G.consumeables)
+--     end
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_sagi',
+--     path = 'z_sagi.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_sagi', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_sagi', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Sagittarius', --name of card
+--         text = { --text of card
+--         "When selecting a card, destroy it and",
+--         "gain +1 {C:attention}hand size{}"
+--         }
+--     },
+--     config = { max_highlighted = 1 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.max_highlighted } }
+--     end,
+--     use = function(self, card, area, copier)
+--        G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.2,
+--             func = function()
+--                 SMODS.destroy_cards(G.hand.highlighted)
+--                 return true
+--             end
+--         }))
+--         G.hand:change_size(1)
+--     end,
+--     can_use = function(self, card)
+--         return G.hand and #G.hand.highlighted <= card.ability.max_highlighted and #G.hand.highlighted > 0
+--     end
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_taurus',
+--     path = 'z_taurus.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_taurus', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_taurus', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Taurus', --name of card
+--         text = { --text of card
+--             "Destroy cards of a random suit",
+--             "and earn {C:money}$3{} for every card destroyed"
+--         }
+--     },
+--     config = { dollars = 3, destroy_count = 0 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.dollars, center.ability.destroy_count} }
+--     end,
+--     use = function(self, card, area, copier)
+--       local _suit = pseudorandom_element(SMODS.Suits, 'taurus')
+--       for i = 1, #G.hand.cards do
+--         if G.hand.cards[i]:is_suit(_suit.key) then
+--         card.ability.destroy_count = card.ability.destroy_count + 1
+--             G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.2,
+--             func = function()
+--                 SMODS.destroy_cards(G.hand.cards[i])
+--                 return true
+--             end
+--             }))
+--         end
+--       end
+--       ease_dollars( card.ability.destroy_count * card.ability.dollars )
+--       card.ability.destroy_count = 0
+
+--     end,
+--     can_use = function(self, card)
+--         return G.hand and #G.hand.cards > 1
+--     end,
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_libra',
+--     path = 'z_libra.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_libra', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_libra', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Libra', --name of card
+--         text = { --text of card
+--             "All odd ranked cards become even"
+--         }
+--     },
+--     config = { dollars = 3, destroy_count = 0 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.dollars, center.ability.destroy_count} }
+--     end,
+--     use = function(self, card, area, copier)
+--         local used_tarot = copier or card
+--         G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.4,
+--             func = function()
+--                 play_sound('tarot1')
+--                 used_tarot:juice_up(0.3, 0.5)
+--                 return true
+--             end
+--         }))
+--         for i = 1, #G.hand.cards do
+--             local percent = 1.15 - (i - 0.999) / (#G.hand.cards - 0.998) * 0.3
+--             G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.15,
+--                 func = function()
+--                     G.hand.cards[i]:flip()
+--                     play_sound('card1', percent)
+--                     G.hand.cards[i]:juice_up(0.3, 0.3)
+--                     return true
+--                 end
+--             }))
+--         end
+--         for i = 1, #G.hand.cards do
+--             if G.hand.cards[i]:get_id() % 2 == 1 then
+--                 G.E_MANAGER:add_event(Event({
+--                     trigger = 'after',
+--                     delay = 0.1,
+--                     func = function()
+--                         assert(SMODS.modify_rank(G.hand.cards[i], 1))
+--                         return true
+--                     end
+--                 }))
+--             end
+--         end
+--         for i = 1, #G.hand.cards do
+--             local percent = 0.85 + (i - 0.999) / (#G.hand.cards - 0.998) * 0.3
+--             G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.15,
+--                 func = function()
+--                     G.hand.cards[i]:flip()
+--                     play_sound('tarot2', percent, 0.6)
+--                     G.hand.cards[i]:juice_up(0.3, 0.3)
+--                     return true
+--                 end
+--             }))
+--         end
+--         delay(0.5)
+--     end,
+--     can_use = function(self, card)
+--         return G.hand and #G.hand.cards > 1
+--     end,
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_scorpio',
+--     path = 'z_scorpio.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_scorpio', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_scorpio', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Scorpio', --name of card
+--         text = { --text of card
+--             "When selecting a {C:blue}Common{} or {C:green}Uncommon{} Joker,",
+--             "destroy it and create a random Joker",
+--             "from the next higher rarity",
+--         }
+--     },
+--     config = { max_highlighted = 1 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.max_highlighted} }
+--     end,
+--     use = function(self, card, area, copier)
+--         local chosen_joker = G.jokers.highlighted[1]
+--         if chosen_joker.config.center.rarity == 1 then 
+--             G.GAME.joker_buffer = G.GAME.joker_buffer + 1
+--             G.E_MANAGER:add_event(Event({
+--                     func = function()
+--                             SMODS.add_card {
+--                                 set = 'Joker',
+--                                 rarity = 'Uncommon',
+--                             }
+--                             G.GAME.joker_buffer = 0
+--                         return true
+--                     end
+--             }))
+--         end
+--         if chosen_joker.config.center.rarity == 2 then 
+--             G.GAME.joker_buffer = G.GAME.joker_buffer + 1
+--             G.E_MANAGER:add_event(Event({
+--                     func = function()
+--                             SMODS.add_card {
+--                                 set = 'Joker',
+--                                 rarity = 'Rare',
+--                             }
+--                             G.GAME.joker_buffer = 0
+--                         return true
+--                     end
+--             }))
+--         end
+--         G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.2,
+--             func = function()
+--                 SMODS.destroy_cards(chosen_joker)
+--                 return true
+--             end
+--         }))
+--     end,
+--     can_use = function(self, card)
+--         return #G.jokers.highlighted <= card.ability.max_highlighted and #G.jokers.highlighted > 0
+--     end
+-- }
+
+
+-- SMODS.Atlas{
+--     key = 'z_aries',
+--     path = 'z_aries.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_aries', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_aries', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Aries', --name of card
+--         text = { --text of card
+--             "Gives an edition to all cards held in hand",
+--             "-1 {C:attention}consumable{} "
+--         }
+--     },
+--     config = { max_highlighted = 1 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.max_highlighted} }
+--     end,
+--         use = function(self, card, area, copier)
+--         local used_tarot = copier or card
+--         G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.4,
+--             func = function()
+--                 play_sound('tarot1')
+--                 used_tarot:juice_up(0.3, 0.5)
+--                 return true
+--             end
+--         }))
+--         for i = 1, #G.hand.cards do
+--             local percent = 1.15 - (i - 0.999) / (#G.hand.cards - 0.998) * 0.3
+--             G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.15,
+--                 func = function()
+--                     G.hand.cards[i]:flip()
+--                     play_sound('card1', percent)
+--                     G.hand.cards[i]:juice_up(0.3, 0.3)
+--                     return true
+--                 end
+--             }))
+--         end
+--         for i = 1, #G.hand.cards do
+--             G.E_MANAGER:add_event(Event({
+--             func = function()
+--                     if math.random(1,3) == 1 then
+--                         G.hand.cards[i]:set_edition("e_polychrome", true)
+--                     elseif math.random(1,3) == 2 then
+--                         G.hand.cards[i]:set_edition("e_foil", true)
+--                     else 
+--                         G.hand.cards[i]:set_edition("e_holo", true)
+--                     end
+--                 return true
+--             end
+--         }))
+--         end
+--         for i = 1, #G.hand.cards do
+--             local percent = 0.85 + (i - 0.999) / (#G.hand.cards - 0.998) * 0.3
+--             G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.15,
+--                 func = function()
+--                     G.hand.cards[i]:flip()
+--                     play_sound('tarot2', percent, 0.6)
+--                     G.hand.cards[i]:juice_up(0.3, 0.3)
+--                     return true
+--                 end
+--             }))
+--         end
+--         delay(0.5)
+--         G.E_MANAGER:add_event(Event({
+--             func = function()
+--                 G.consumeables.config.card_limit = G.consumeables.config.card_limit - 1
+--                 return true
+--             end
+--         }))
+--     end,
+--     can_use = function(self, card)
+--         return G.hand and #G.hand.cards > 1
+--     end,
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_capri',
+--     path = 'z_capri.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_capri', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_capri', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Capricorn', --name of card
+--         text = { --text of card
+--             "Gives an random enhancement and seal",
+--             "to 3 selected cards"
+--         }
+--     },
+--     config = { max_highlighted = 3 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.max_highlighted} }
+--     end,
+--     use = function(self, card, area, copier)
+--         G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.4,
+--             func = function()
+--                 play_sound('tarot1')
+--                 card:juice_up(0.3, 0.5)
+--                 return true
+--             end
+--         }))
+--         for i = 1, #G.hand.highlighted do
+--             local percent = 1.15 - (i - 0.999) / (#G.hand.highlighted - 0.998) * 0.3
+--             G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.15,
+--                 func = function()
+--                     G.hand.highlighted[i]:flip()
+--                     play_sound('card1', percent)
+--                     G.hand.highlighted[i]:juice_up(0.3, 0.3)
+--                     return true
+--                 end
+--             }))
+--         end
+--         delay(0.2)
+--         for i = 1, #G.hand.highlighted do
+--                     local enhancement = pseudorandom_element({ "m_stone", "m_gold", "m_steel", "m_glass", "m_lucky", "m_wild", "m_mult", "m_bonus" }, pseudoseed("sizimod_third"))
+--                     local _seal = SMODS.poll_seal({ guaranteed = true, type_key = 'sizimod_seel_seal' })
+--                     G.hand.highlighted[i]:set_ability(G.P_CENTERS[enhancement], nil, true)
+--                     G.hand.highlighted[i]:set_seal(_seal, nil, true)
+--                     G.E_MANAGER:add_event(Event({
+--                         func = function()
+--                             G.hand.highlighted[i]:juice_up()
+--                             return true
+--                         end
+--                     }))
+--         end
+--         for i = 1, #G.hand.highlighted do
+--             local percent = 0.85 + (i - 0.999) / (#G.hand.highlighted - 0.998) * 0.3
+--             G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.15,
+--                 func = function()
+--                     G.hand.highlighted[i]:flip()
+--                     play_sound('tarot2', percent, 0.6)
+--                     G.hand.highlighted[i]:juice_up(0.3, 0.3)
+--                     return true
+--                 end
+--             }))
+--         end
+--         G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.2,
+--             func = function()
+--                 G.hand:unhighlight_all()
+--                 return true
+--             end
+--         }))
+--         delay(0.5)
+--     end,
+--     can_use = function(self, card)
+--         return G.hand and #G.hand.highlighted > 0 and #G.hand.highlighted <= card.ability.max_highlighted
+--     end
+-- }
+
+
+-- SMODS.Atlas{
+--     key = 'z_leo',
+--     path = 'z_leo.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_leo', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_leo', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Leo', --name of card
+--         text = { --text of card
+--             "Create 2 {C:negative}negative{} {C:attention}consumables{}",
+--             "of any random type",
+--             "{C:attention}-1 hand size{}"
+--         }
+--     },
+--     config = { max_highlighted = 3 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.max_highlighted} }
+--     end,
+--     use = function(self, card, area, copier)
+--         G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.0,
+--                 func = function()
+--                         for i = 1, math.min(2, G.consumeables.config.card_limit - #G.consumeables.cards) do
+--                             if G.consumeables.config.card_limit > #G.consumeables.cards then
+--                                 local _card = create_card(
+--                                         "Consumeables",
+--                                         G.consumeables,
+--                                         nil,
+--                                         nil,
+--                                         nil,
+--                                         nil
+--                                     )
+--                                 _card:add_to_deck()
+--                                 _card:set_edition("e_negative", true)
+--                                 G.consumeables:emplace(_card)
+--                             end
+--                         end
+--                     G.GAME.consumeable_buffer = 0
+--                     return true
+--                 end
+--         }))
+--         G.hand:change_size(-1)
+--     end,
+--     can_use = function(self, card)
+--         return #G.consumeables.cards < G.consumeables.config.card_limit or card.area == G.consumeables
+--     end
+-- }
+
+-- SMODS.Atlas{
+--     key = 'z_virgo',
+--     path = 'z_virgo.png',
+--     px = 71,
+--     py = 95,
+-- }
+
+-- SMODS.Consumable{
+--     key = 'z_virgo', --key
+--     set = 'ZodiacConsumableType', --the set of the card: corresponds to a consumable type
+--     atlas = 'z_virgo', --atlas
+--     pos = {x = 0, y = 0}, --position in atlas
+--     loc_txt = {
+--         name = 'Virgo', --name of card
+--         text = { --text of card
+--             "Changes up to 3 cards",
+--             "into {C:attention}face cards{}"
+--         }
+--     },
+--     config = { max_highlighted = 3 },
+--     loc_vars = function(self, info_queue, center)
+--         return { vars = { center.ability.max_highlighted} }
+--     end,
+--     use = function(self, card, area, copier)
+--                 G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.4,
+--             func = function()
+--                 play_sound('tarot1')
+--                 card:juice_up(0.3, 0.5)
+--                 return true
+--             end
+--         }))
+--         for i = 1, #G.hand.highlighted do
+--             local percent = 1.15 - (i - 0.999) / (#G.hand.highlighted - 0.998) * 0.3
+--             G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.15,
+--                 func = function()
+--                     G.hand.highlighted[i]:flip()
+--                     play_sound('card1', percent)
+--                     G.hand.highlighted[i]:juice_up(0.3, 0.3)
+--                     return true
+--                 end
+--             }))
+--         end
+--         delay(0.2)
+--         for i = 1, #G.hand.highlighted do
+--                     local faces = {}
+--                     for _, rank_key in ipairs(SMODS.Rank.obj_buffer) do
+--                         local rank = SMODS.Ranks[rank_key]
+--                         if rank.face then table.insert(faces, rank) end
+--                     end
+--                     local _rank = pseudorandom_element(faces, 'virgo_create').key
+--                     G.E_MANAGER:add_event(Event({
+--                     trigger = 'after',
+--                     delay = 0.1,
+--                     func = function()
+--                          SMODS.change_base(G.hand.highlighted[i], nil, _rank)
+--                         return true
+--                     end
+--                 }))
+--         end
+--         for i = 1, #G.hand.highlighted do
+--             local percent = 0.85 + (i - 0.999) / (#G.hand.highlighted - 0.998) * 0.3
+--             G.E_MANAGER:add_event(Event({
+--                 trigger = 'after',
+--                 delay = 0.15,
+--                 func = function()
+--                     G.hand.highlighted[i]:flip()
+--                     play_sound('tarot2', percent, 0.6)
+--                     G.hand.highlighted[i]:juice_up(0.3, 0.3)
+--                     return true
+--                 end
+--             }))
+--         end
+--         G.E_MANAGER:add_event(Event({
+--             trigger = 'after',
+--             delay = 0.2,
+--             func = function()
+--                 G.hand:unhighlight_all()
+--                 return true
+--             end
+--         }))
+--         delay(0.5)
+--     end,
+--     can_use = function(self, card)
+--         return G.hand and #G.hand.highlighted > 0 and #G.hand.highlighted <= card.ability.max_highlighted
+--     end
+-- }
+
+
+
+-- SMODS.Sound({
+--     key = "music_northernlight", 
+--     path = "music_northernlight.ogg",
+--     pitch = 1,
+--     volume = 0.6,
+--     select_music_track = function()
+--         if G.STATE == G.STATES.SMODS_BOOSTER_OPENED then
+--             if G.pack_cards
+--                 and G.pack_cards.cards
+--                 and G.pack_cards.cards[1]
+--                 and G.pack_cards.cards[1].config
+--                 and G.pack_cards.cards[1].config.center
+--                 and G.pack_cards.cards[1].config.center.mod
+--                 and G.pack_cards.cards[1].config.center.mod.id 
+--                 and G.pack_cards.cards[1].config.center.mod.id == "SiziMod" then
+-- 		        return true 
+--             end
+--         end
+-- 	end,
+-- })
+
+-- SMODS.Atlas{
+--     key = 'zodiac_basic_1',
+--     path = 'zodiac_basic_1.png',
+--     px = 71,
+--     py = 96,
+-- }
+
+
+-- SMODS.Booster{
+--     key = 'zodiac_basic_1',
+--     group_key = "zodiac_booster_group",
+--     atlas = 'zodiac_basic_1', 
+--     pos = { x = 0, y = 0 },
+--     discovered = true,
+--     loc_txt= {
+--         name = 'Horoscope Pack',
+--         text = { "Pick {C:attention}#1#{} card out",
+--                 "{C:attention}#2#{} {C:red}Zodiac{} cards", },
+--         group_name = {"Pick somethin', will ya?"},
+--     },
+--     draw_hand = true,
+--     config = {
+--         extra = 3,
+--         choose = 1, 
+--     },
+--     loc_vars = function(self, info_queue, card)
+--         return { vars = { card.ability.choose, card.ability.extra } }
+--     end,
+--     weight = 1,
+--     cost = 4,
+--     kind = "Horoscope",
+--     particles = function(self)
+--         G.booster_pack_sparkles = Particles(1, 1, 0, 0, {
+--             timer = 0.015,
+--             scale = 0.2,
+--             initialize = true,
+--             lifespan = 1,
+--             speed = 1.1,
+--             padding = -1,
+--             attach = G.ROOM_ATTACH,
+--             colours = { G.C.WHITE, lighten(G.C.RED, 0.4), lighten(G.C.RED, 0.2), lighten(G.C.GOLD, 0.2) },
+--             fill = true
+--         })
+--         G.booster_pack_sparkles.fade_alpha = 1
+--         G.booster_pack_sparkles:fade(1, 0)
+--     end,
+--     ease_background_colour = function(self)
+--         ease_colour(G.C.DYN_UI.MAIN, HEX("bc1616"))
+--         ease_background_colour{new_colour = HEX("bc1616"), special_colour = HEX("662323"), contrast = contrast}
+--     end,
+--     create_card = function(self, card, i)
+--         return SMODS.create_card({
+--             set = "ZodiacConsumableType",
+--             area = G.pack_cards,
+--             skip_materialize = true,
+--             soulable = true,
+--         })
+--     end,
+
+--     in_pool = function() return true end
+-- }
+
+-- SMODS.Atlas{
+--     key = 'zodiac_basic_2',
+--     path = 'zodiac_basic_2.png',
+--     px = 71,
+--     py = 96,
+-- }
+
+
+-- SMODS.Booster{
+--     key = 'zodiac_basic_2',
+--     group_key = "zodiac_booster_group",
+--     atlas = 'zodiac_basic_2', 
+--     pos = { x = 0, y = 0 },
+--     discovered = true,
+--     loc_txt= {
+--         name = 'Horoscope Pack',
+--         text = { "Pick {C:attention}#1#{} card out",
+--                 "{C:attention}#2#{} {C:red}Zodiac{} cards", },
+--         group_name = {"Pick somethin', will ya?"},
+--     },
+--     draw_hand = true,
+--     config = {
+--         extra = 3,
+--         choose = 1, 
+--     },
+--     loc_vars = function(self, info_queue, card)
+--         return { vars = { card.ability.choose, card.ability.extra } }
+--     end,
+--     weight = 1,
+--     cost = 4,
+--     kind = "Horoscope",
+--     particles = function(self)
+--         G.booster_pack_sparkles = Particles(1, 1, 0, 0, {
+--             timer = 0.015,
+--             scale = 0.2,
+--             initialize = true,
+--             lifespan = 1,
+--             speed = 1.1,
+--             padding = -1,
+--             attach = G.ROOM_ATTACH,
+--             colours = { G.C.WHITE, lighten(G.C.RED, 0.4), lighten(G.C.RED, 0.2), lighten(G.C.GOLD, 0.2) },
+--             fill = true
+--         })
+--         G.booster_pack_sparkles.fade_alpha = 1
+--         G.booster_pack_sparkles:fade(1, 0)
+--     end,
+--     ease_background_colour = function(self)
+--         ease_colour(G.C.DYN_UI.MAIN, HEX("bc1616"))
+--         ease_background_colour{new_colour = HEX("bc1616"), special_colour = HEX("662323"), contrast = contrast}
+--     end,
+--     create_card = function(self, card, i)
+--         return SMODS.create_card({
+--             set = "ZodiacConsumableType",
+--             area = G.pack_cards,
+--             skip_materialize = true,
+--             soulable = true,
+--         })
+--     end,
+
+--     in_pool = function() return true end
+-- }
+
+-- SMODS.Atlas{
+--     key = 'zodiac_jumbo',
+--     path = 'zodiac_jumbo.png',
+--     px = 71,
+--     py = 96,
+-- }
+
+
+-- SMODS.Booster{
+--     key = 'zodiac_jumbo',
+--     group_key = "zodiac_booster_group",
+--     atlas = 'zodiac_jumbo', 
+--     pos = { x = 0, y = 0 },
+--     discovered = true,
+--     loc_txt= {
+--         name = 'Jumbo Horoscope Pack',
+--         text = { "Pick {C:attention}#1#{} card out",
+--                 "{C:attention}#2#{} {C:red}Zodiac{} cards", },
+--         group_name = {"Pick somethin', will ya?"},
+--     },
+--     draw_hand = true,
+--     config = {
+--         extra = 4,
+--         choose = 1, 
+--     },
+--     loc_vars = function(self, info_queue, card)
+--         return { vars = { card.ability.choose, card.ability.extra } }
+--     end,
+--     weight = 1,
+--     cost = 6,
+--     kind = "Horoscope",
+--     particles = function(self)
+--         G.booster_pack_sparkles = Particles(1, 1, 0, 0, {
+--             timer = 0.015,
+--             scale = 0.2,
+--             initialize = true,
+--             lifespan = 1,
+--             speed = 1.1,
+--             padding = -1,
+--             attach = G.ROOM_ATTACH,
+--             colours = { G.C.WHITE, lighten(G.C.RED, 0.4), lighten(G.C.RED, 0.2), lighten(G.C.GOLD, 0.2) },
+--             fill = true
+--         })
+--         G.booster_pack_sparkles.fade_alpha = 1
+--         G.booster_pack_sparkles:fade(1, 0)
+--     end,
+--     ease_background_colour = function(self)
+--         ease_colour(G.C.DYN_UI.MAIN, HEX("bc1616"))
+--         ease_background_colour{new_colour = HEX("bc1616"), special_colour = HEX("662323"), contrast = contrast}
+--     end,
+--     create_card = function(self, card, i)
+--         return SMODS.create_card({
+--             set = "ZodiacConsumableType",
+--             area = G.pack_cards,
+--             skip_materialize = true,
+--             soulable = true,
+--         })
+--     end,
+
+--     in_pool = function() return true end
+-- }
+
+-- SMODS.Atlas{
+--     key = 'zodiac_mega',
+--     path = 'zodiac_mega.png',
+--     px = 71,
+--     py = 96,
+-- }
+
+
+-- SMODS.Booster{
+--     key = 'zodiac_mega',
+--     group_key = "zodiac_booster_group",
+--     atlas = 'zodiac_mega', 
+--     pos = { x = 0, y = 0 },
+--     discovered = true,
+--     loc_txt= {
+--         name = 'Mega Horoscope Pack',
+--         text = { "Pick {C:attention}#1#{} card out",
+--                 "{C:attention}#2#{} {C:red}Zodiac{} cards", },
+--         group_name = {"Pick somethin', will ya?"},
+--     },
+--     draw_hand = true,
+--     config = {
+--         extra = 4,
+--         choose = 2, 
+--     },
+--     loc_vars = function(self, info_queue, card)
+--         return { vars = { card.ability.choose, card.ability.extra } }
+--     end,
+--     weight = 1,
+--     cost = 8,
+--     kind = "Horoscope",
+--     particles = function(self)
+--         G.booster_pack_sparkles = Particles(1, 1, 0, 0, {
+--             timer = 0.015,
+--             scale = 0.2,
+--             initialize = true,
+--             lifespan = 1,
+--             speed = 1.1,
+--             padding = -1,
+--             attach = G.ROOM_ATTACH,
+--             colours = { G.C.WHITE, lighten(G.C.RED, 0.4), lighten(G.C.RED, 0.2), lighten(G.C.GOLD, 0.2) },
+--             fill = true
+--         })
+--         G.booster_pack_sparkles.fade_alpha = 1
+--         G.booster_pack_sparkles:fade(1, 0)
+--     end,
+--     ease_background_colour = function(self)
+--         ease_colour(G.C.DYN_UI.MAIN, HEX("bc1616"))
+--         ease_background_colour{new_colour = HEX("bc1616"), special_colour = HEX("662323"), contrast = contrast}
+--     end,
+--     create_card = function(self, card, i)
+--         return SMODS.create_card({
+--             set = "ZodiacConsumableType",
+--             area = G.pack_cards,
+--             skip_materialize = true,
+--             soulable = true,
+--         })
+--     end,
+
+--     in_pool = function() return true end
+-- }
 
 ----------------------------------------------
 ------------MOD CODE END----------------------
